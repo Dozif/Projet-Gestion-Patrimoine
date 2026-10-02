@@ -1,5 +1,6 @@
 from datetime import date
 
+from django.http import Http404, HttpResponse
 from django.shortcuts import render
 
 from biens.models import Bien
@@ -7,7 +8,7 @@ from commun.annees import annee_demandee
 from fiscalite.models import Configuration, ParametresAnnuels
 from fiscalite.services import ParametresManquants, calculer_annee
 
-from .presentation import estimation_impot
+from .presentation import ecrire_csv, estimation_impot
 from .suivi import alerte_loyers, alertes_pinel, etat_loyers, resume_pinel
 
 
@@ -52,3 +53,15 @@ def tableau_de_bord(request):
         **contexte, "resultat": resultat, "parametres": parametres, "cartes": cartes, "alertes": alertes,
         "pinels": pinels, "estimation": estimation,
     })
+
+
+def export_csv(request, annee):
+    try:
+        resultat, contexte = calculer_annee(annee)
+    except (ParametresManquants, ValueError) as erreur:
+        raise Http404(str(erreur)) from None
+    reponse = HttpResponse(content_type="text/csv; charset=utf-8")
+    reponse["Content-Disposition"] = f'attachment; filename="declaration-2044-{annee}.csv"'
+    reponse.write("\ufeff")
+    ecrire_csv(reponse, resultat, contexte)
+    return reponse

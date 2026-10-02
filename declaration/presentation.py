@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import csv
 import hashlib
 import json
 from decimal import ROUND_HALF_UP, Decimal
 
+from fiscal import en_euros
 from fiscal.calcul_2044 import LIGNES
 
 ORDRE = ("211", "212", "213", "214", "215", "221", "222", "223", "224", "225", "226", "227", "229", "230", "240", "250")
@@ -92,3 +94,16 @@ def resultat_vers_dict(resultat, contexte) -> dict:
 
 def empreinte(donnees: dict) -> str:
     return hashlib.sha256(json.dumps(donnees, sort_keys=True).encode()).hexdigest()
+
+
+def ecrire_csv(fichier, resultat, contexte) -> None:
+    ecrivain = csv.writer(fichier, delimiter=";")
+    ecrivain.writerow(["Ligne", "Libellé", *colonnes_biens(resultat, contexte), "Total"])
+    for ligne in lignes_declaration(resultat):
+        ecrivain.writerow(
+            [ligne["code"], ligne["libelle"], *(en_euros(v) for v in ligne["valeurs"]), en_euros(ligne["total"])]
+        )
+    ecrivain.writerow([])
+    ecrivain.writerow(["Case", "Libellé", "Montant"])
+    for case in cases_2042(resultat):
+        ecrivain.writerow([case["code"], case["libelle"], en_euros(case["montant"])])
