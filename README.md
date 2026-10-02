@@ -28,3 +28,8 @@ La base SQLite et les justificatifs sont dans `var/` (ignoré par git).
 
 L'application aide à préparer la déclaration ; vérifiez chaque année les montants avec la notice 2044
 et les paramètres fiscaux (Paramètres → Paramètres annuels).
+
+## Installer sur le Synology
+
+Suivre [docs/INSTALLATION-SYNOLOGY.md](docs/INSTALLATION-SYNOLOGY.md). Archive à copier sur le NAS :
+`bash scripts/creer_archive.sh` (dans `dist/`).
