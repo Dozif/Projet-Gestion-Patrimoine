@@ -43,7 +43,7 @@ L'application est une **aide à la préparation** de la déclaration ; chaque r�
 
 ## 3. Architecture
 
-```
+```text
 ┌──────────── Synology (Container Manager) ────────────┐
 │  Reverse proxy DSM  https://patrimoine.<domaine>:443 │
 │            │                                         │
@@ -67,39 +67,39 @@ L'application est une **aide à la préparation** de la déclaration ; chaque r�
 
 Toutes les opérations sont rattachées à l'année de **paiement / encaissement effectif** (comptabilité de caisse).
 
-| Entité | Champs principaux |
-|---|---|
-| **Bien** | nom, adresse, surface habitable, surface annexes, date d'acquisition, prix de revient, `regime_fiscal` (v1 : `FONCIER_REEL`), actif |
-| **EngagementPinel** (0..1 par bien) | date de début, durée initiale (6/9/12), prolongations, zone, **calendrier de taux** (liste de périodes : année début, année fin, taux annuel), prix de revient retenu, surface retenue |
-| **Locataire** | nom, coordonnées, revenu fiscal de référence à la signature, nombre de personnes du foyer |
-| **Bail** | bien, locataire, date début, date fin (optionnelle), loyer hors charges, provision sur charges, dépôt de garantie |
-| **Categorie** | code, libellé, nature (`RECETTE_IMPOSABLE`, `RECETTE_NON_IMPOSABLE`, `CHARGE_DEDUCTIBLE`, `CHARGE_NON_DEDUCTIBLE`, `INTERETS`), ligne 2044, texte d'aide, source, active. Liste préremplie, modifiable |
-| **Operation** | date de paiement, bien, catégorie, montant (centimes, positif), libellé, justificatif (fichier, optionnel), commentaire, lien optionnel vers un relevé d'agence |
-| **ReleveAgence** | bien, période, loyer brut, honoraires, autres retenues, net versé → génère les opérations correspondantes |
-| **Pret** | bien, banque, capital emprunté, date de début |
-| **Echeance** | prêt, date, capital, intérêts, assurance emprunteur, frais (import CSV ou saisie manuelle) |
-| **CoproprieteAnnuelle** | bien, année, provisions versées (→ ligne 229), part non déductible issue du décompte du syndic (→ ligne 230 de l'année suivante) |
-| **Deficit** | année d'origine, nature (`REPORTABLE_FONCIER`), montant initial, montant imputé (calculé), année d'expiration (origine + 10) — saisie initiale des déficits antérieurs, puis alimentation automatique |
-| **ParametresAnnuels** | année, plafond d'imputation sur revenu global (10 700 €), forfait frais de gestion par local (20 €), taux prélèvements sociaux, TMI du foyer, plafonds de loyer Pinel par zone, plafonds de ressources Pinel, cases 2042 / RICI de l'année |
-| **DeclarationFigee** | année, date, résultat complet sérialisé (JSON), empreinte des opérations prises en compte |
+| Entité                              | Champs principaux                                                                                                                                                                                                                          |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Bien**                            | nom, adresse, surface habitable, surface annexes, date d'acquisition, prix de revient, `regime_fiscal` (v1 : `FONCIER_REEL`), actif                                                                                                        |
+| **EngagementPinel** (0..1 par bien) | date de début, durée initiale (6/9/12), prolongations, zone, **calendrier de taux** (liste de périodes : année début, année fin, taux annuel), prix de revient retenu, surface retenue                                                     |
+| **Locataire**                       | nom, coordonnées, revenu fiscal de référence à la signature, nombre de personnes du foyer                                                                                                                                                  |
+| **Bail**                            | bien, locataire, date début, date fin (optionnelle), loyer hors charges, provision sur charges, dépôt de garantie                                                                                                                          |
+| **Categorie**                       | code, libellé, nature (`RECETTE_IMPOSABLE`, `RECETTE_NON_IMPOSABLE`, `CHARGE_DEDUCTIBLE`, `CHARGE_NON_DEDUCTIBLE`, `INTERETS`), ligne 2044, texte d'aide, source, active. Liste préremplie, modifiable                                     |
+| **Operation**                       | date de paiement, bien, catégorie, montant (centimes, positif), libellé, justificatif (fichier, optionnel), commentaire, lien optionnel vers un relevé d'agence                                                                            |
+| **ReleveAgence**                    | bien, période, loyer brut, honoraires, autres retenues, net versé → génère les opérations correspondantes                                                                                                                                  |
+| **Pret**                            | bien, banque, capital emprunté, date de début                                                                                                                                                                                              |
+| **Echeance**                        | prêt, date, capital, intérêts, assurance emprunteur, frais (import CSV ou saisie manuelle)                                                                                                                                                 |
+| **CoproprieteAnnuelle**             | bien, année, provisions versées (→ ligne 229), part non déductible issue du décompte du syndic (→ ligne 230 de l'année suivante)                                                                                                           |
+| **Deficit**                         | année d'origine, nature (`REPORTABLE_FONCIER`), montant initial, montant imputé (calculé), année d'expiration (origine + 10) — saisie initiale des déficits antérieurs, puis alimentation automatique                                      |
+| **ParametresAnnuels**               | année, plafond d'imputation sur revenu global (10 700 €), forfait frais de gestion par local (20 €), taux prélèvements sociaux, TMI du foyer, plafonds de loyer Pinel par zone, plafonds de ressources Pinel, cases 2042 / RICI de l'année |
+| **DeclarationFigee**                | année, date, résultat complet sérialisé (JSON), empreinte des opérations prises en compte                                                                                                                                                  |
 
 ### Catégories préremplies (extrait)
 
-| Catégorie | Nature | Ligne 2044 |
-|---|---|---|
-| Loyer encaissé | Recette imposable | 211 |
-| Charges remboursées par le locataire | Recette non imposable | — |
-| Subvention ANAH / indemnité d'assurance | Recette imposable | 213 / 214 |
-| Honoraires d'agence, frais de gestion, procédure | Charge déductible | 221 |
-| Assurance propriétaire non occupant, GLI | Charge déductible | 223 |
-| Travaux de réparation, entretien, amélioration | Charge déductible | 224 |
-| Charges récupérables non récupérées au départ du locataire | Charge déductible | 225 |
-| Taxe foncière (hors TEOM) | Charge déductible | 227 |
-| TEOM | Charge non déductible | — |
-| Provisions de copropriété | Charge déductible (via CoproprieteAnnuelle) | 229 |
-| Intérêts, assurance emprunteur, frais de dossier/garantie | Intérêts | 250 |
-| Capital remboursé | Charge non déductible | — |
-| Travaux de construction, reconstruction, agrandissement | Charge non déductible | — |
+| Catégorie                                                  | Nature                                      | Ligne 2044 |
+| ---------------------------------------------------------- | ------------------------------------------- | ---------- |
+| Loyer encaissé                                             | Recette imposable                           | 211        |
+| Charges remboursées par le locataire                       | Recette non imposable                       | —          |
+| Subvention ANAH / indemnité d'assurance                    | Recette imposable                           | 213 / 214  |
+| Honoraires d'agence, frais de gestion, procédure           | Charge déductible                           | 221        |
+| Assurance propriétaire non occupant, GLI                   | Charge déductible                           | 223        |
+| Travaux de réparation, entretien, amélioration             | Charge déductible                           | 224        |
+| Charges récupérables non récupérées au départ du locataire | Charge déductible                           | 225        |
+| Taxe foncière (hors TEOM)                                  | Charge déductible                           | 227        |
+| TEOM                                                       | Charge non déductible                       | —          |
+| Provisions de copropriété                                  | Charge déductible (via CoproprieteAnnuelle) | 229        |
+| Intérêts, assurance emprunteur, frais de dossier/garantie  | Intérêts                                    | 250        |
+| Capital remboursé                                          | Charge non déductible                       | —          |
+| Travaux de construction, reconstruction, agrandissement    | Charge non déductible                       | —          |
 
 ## 5. Moteur fiscal (`fiscal`)
 
