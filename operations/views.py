@@ -9,6 +9,7 @@ from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from biens.models import Bien
+from commun.annees import annee_demandee
 from commun.montants import format_euros
 
 from .forms import OperationForm, ReleveForm
@@ -31,10 +32,7 @@ def _requete(params):
 
 def liste(request):
     annees = sorted({d.year for d in Operation.objects.dates("date_paiement", "year")}, reverse=True)
-    try:
-        annee = int(request.GET.get("annee") or (annees[0] if annees else date.today().year))
-    except ValueError:
-        annee = date.today().year
+    annee = annee_demandee(request, annees[0] if annees else date.today().year)
     if annee not in annees:
         annees = sorted({*annees, annee}, reverse=True)
     requete = Operation.objects.filter(date_paiement__year=annee).select_related("bien", "categorie")
