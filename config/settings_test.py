@@ -15,3 +15,4 @@ STORAGES = {
 }
 PATRIMOINE_INSCRIPTION_LIBRE = True
 PATRIMOINE_CODE_INSTALLATION = ""
+STATIC_ROOT = Path(tempfile.mkdtemp(prefix="patrimoine-static-"))
