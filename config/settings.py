@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     "commun",
     "comptes",
     "biens",
+    "operations",
 ]
 
 MIDDLEWARE = [
