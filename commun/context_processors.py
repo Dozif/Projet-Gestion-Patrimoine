@@ -7,6 +7,7 @@ ENTREES = (
     ("credit:liste", "Crédit"),
     ("fiscalite:copropriete", "Copropriété"),
     ("fiscalite:deficits", "Déficits"),
+    ("declaration:declaration", "Déclaration"),
     ("admin:index", "Paramètres"),
 )
 

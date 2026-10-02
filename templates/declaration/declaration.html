@@ -1,0 +1,75 @@
+{% extends "base.html" %}{% load montants %}
+{% block titre %}Déclaration {{ annee }}{% endblock %}
+{% block contenu %}
+<header class="entete">
+  <div>
+    <div class="actions"><h1>Déclaration {{ annee }}</h1>{% if figee %}<span class="badge accent">Figée le {{ figee.figee_le|date:"d/m/Y" }}</span>{% endif %}</div>
+    <p class="sous-titre">Formulaire 2044 — revenus fonciers, régime réel. Cliquez sur une ligne pour voir son détail. Montants arrondis à l'euro.</p>
+  </div>
+  <div class="actions no-print">
+    <form method="get" class="filtres">
+      <div class="champ">
+        <label for="annee">Année</label>
+        <select id="annee" name="annee">{% for a in annees %}<option value="{{ a }}"{% if a == annee %} selected{% endif %}>{{ a }}</option>{% endfor %}</select>
+      </div>
+      <button class="bouton" type="submit">Afficher</button>
+    </form>
+    {% if not erreur %}
+    <a class="bouton" href="{% url 'declaration:export_csv' annee %}">Exporter CSV</a>
+    <button class="bouton" type="button" onclick="window.print()">Imprimer / PDF</button>
+    {# actions-figer #}
+    {% endif %}
+  </div>
+</header>
+{% if erreur %}
+<div class="alerte attention" role="alert"><div><strong>Calcul impossible pour {{ annee }}</strong><span class="helptext">{{ erreur }}</span></div></div>
+{% else %}
+{# alerte-modifiee #}
+<div class="decl">
+  <div class="carte tableau">
+    <table>
+      <thead><tr><th>Ligne</th><th>Libellé</th>{% for nom in colonnes %}<th class="montant">{{ nom }}</th>{% endfor %}<th class="montant">Total</th></tr></thead>
+      <tbody>
+      {% for l in lignes %}
+        <tr class="{{ l.type }}{% if l.code and l.code == ligne_choisie %} actif{% endif %}">
+          <td>{{ l.code }}</td>
+          <td>{% if l.code %}<a href="?annee={{ annee }}&amp;ligne={{ l.code }}#detail">{{ l.libelle }}</a>{% else %}{{ l.libelle }}{% endif %}</td>
+          {% for v in l.valeurs %}<td class="montant{% if v < 0 %} negatif{% endif %}">{{ v|euros_entiers }}</td>{% endfor %}
+          <td class="montant{% if l.total < 0 %} negatif{% endif %}">{{ l.total|euros_entiers }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="pile">
+    {% if detail %}
+    <section class="carte pile" id="detail">
+      <span class="helptext">Détail — ligne {{ detail.code }}</span>
+      <h2>{{ detail.libelle }}</h2>
+      <p>{{ detail.regle }}</p>
+      {% for o in detail.operations %}<div class="ligne-resume detail-op"><span>{{ o.texte }}</span><strong>{{ o.montant|euros }}</strong></div>{% empty %}<p class="helptext">Montant calculé automatiquement.</p>{% endfor %}
+      <div class="ligne-resume total"><span>Total</span><strong>{{ detail.total|euros }}</strong></div>
+      <span class="helptext">Source : {{ detail.source }}</span>
+    </section>
+    {% endif %}
+    <section class="carte pile">
+      <h2>À reporter sur la 2042</h2>
+      <div class="cases">
+        {% for c in cases %}<div class="case{% if c.montant %} remplie{% endif %}"><strong>Case {{ c.code }}</strong><span class="chiffre">{{ c.montant|euros_entiers }}</span><span class="helptext">{{ c.libelle }}</span></div>{% endfor %}
+      </div>
+      {% for a in resultat.alertes %}<p class="helptext">{{ a }}</p>{% endfor %}
+      {% for p in pinel %}<div class="alerte ok"><div><strong>Réduction Pinel (2042-RICI) — {{ p.bien }}</strong></div><strong>{{ p.reduction|euros }}</strong></div>{% endfor %}
+    </section>
+    <section class="carte pile">
+      <h2>Déficits à reporter après {{ annee }}</h2>
+      {% if resultat.deficit.imputations %}<p class="helptext">Imputés cette année : {% for d in resultat.deficit.imputations %}{{ d.annee_origine }} ({{ d.montant|euros_entiers }}){% if not forloop.last %}, {% endif %}{% endfor %}</p>{% endif %}
+      <table>
+        <thead><tr><th>Origine</th><th class="montant">Restant</th><th>Dernière année</th></tr></thead>
+        <tbody>{% for d in resultat.deficit.deficits_apres %}<tr><td>{{ d.annee_origine }}</td><td class="montant">{{ d.montant|euros_entiers }}</td><td>{{ d.annee_origine|add:10 }}</td></tr>{% empty %}<tr><td colspan="3">Aucun déficit à reporter.</td></tr>{% endfor %}</tbody>
+      </table>
+      {% for d in resultat.deficit.deficits_expires %}<p class="helptext negatif">Déficit {{ d.annee_origine }} expiré : {{ d.montant|euros_entiers }} perdus.</p>{% endfor %}
+    </section>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

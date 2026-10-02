@@ -82,3 +82,13 @@ code.cle{word-break:break-all}
 .alerte.ok{background:var(--d-fond)}
 .barre{height:10px;border-radius:999px;background:var(--ligne);overflow:hidden}
 .barre span{display:block;height:100%;background:var(--accent)}
+.decl{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:16px;align-items:start}
+tr.total td{font-weight:700;background:var(--fond)}
+tr.resultat td{font-weight:700;border-top:2px solid var(--ligne)}
+tr.actif td{background:var(--accent-doux)}
+.detail-op{padding:8px 10px;border-radius:8px;background:var(--fond);font-size:14px}
+.cases{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.case{display:flex;flex-direction:column;gap:2px;border:1px solid var(--ligne);border-radius:10px;padding:12px}
+.case.remplie{border-color:var(--accent);background:var(--accent-doux)}
+@media (max-width:900px){.decl{grid-template-columns:1fr}}
+@media print{.side,.no-print,.messages{display:none!important}.shell{display:block}.main{padding:0}body{background:#FFFFFF;color:#000000}.carte{border-color:#999999;break-inside:avoid}a{color:inherit;text-decoration:none}}

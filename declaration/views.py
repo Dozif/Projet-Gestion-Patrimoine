@@ -5,10 +5,11 @@ from django.shortcuts import render
 
 from biens.models import Bien
 from commun.annees import annee_demandee
+from fiscal.pinel import reduction_annee
 from fiscalite.models import Configuration, ParametresAnnuels
 from fiscalite.services import ParametresManquants, calculer_annee
 
-from .presentation import ecrire_csv, estimation_impot
+from .presentation import cases_2042, colonnes_biens, detail_ligne, ecrire_csv, estimation_impot, lignes_declaration
 from .suivi import alerte_loyers, alertes_pinel, etat_loyers, resume_pinel
 
 
@@ -53,6 +54,31 @@ def tableau_de_bord(request):
         **contexte, "resultat": resultat, "parametres": parametres, "cartes": cartes, "alertes": alertes,
         "pinels": pinels, "estimation": estimation,
     })
+
+
+def declaration(request):
+    aujourd_hui = date.today()
+    annee = annee_demandee(request, aujourd_hui.year - 1)
+    contexte = {"annee": annee, "annees": _annees(aujourd_hui)}
+    try:
+        resultat, contexte_fiscal = calculer_annee(annee)
+    except (ParametresManquants, ValueError) as erreur:
+        return render(request, "declaration/declaration.html", {**contexte, "erreur": str(erreur)})
+    ligne_choisie = request.GET.get("ligne", "")
+    pinel = [
+        {"bien": bien.nom, "reduction": reduction_annee(bien.pinel.vers_fiscal(), annee)}
+        for bien in Bien.objects.filter(pinel__isnull=False).select_related("pinel")
+    ]
+    contexte.update(
+        resultat=resultat,
+        colonnes=colonnes_biens(resultat, contexte_fiscal),
+        lignes=lignes_declaration(resultat),
+        ligne_choisie=ligne_choisie,
+        detail=detail_ligne(resultat, contexte_fiscal, ligne_choisie),
+        cases=cases_2042(resultat),
+        pinel=[p for p in pinel if p["reduction"]],
+    )
+    return render(request, "declaration/declaration.html", contexte)
 
 
 def export_csv(request, annee):
