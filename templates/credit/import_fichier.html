@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block titre %}Importer un échéancier{% endblock %}
+{% block contenu %}
+<header class="entete"><div><h1>Importer un échéancier</h1><p class="sous-titre">{{ pret }}</p></div></header>
+<form method="post" enctype="multipart/form-data" class="carte formulaire">
+  {% csrf_token %}
+  <p>Exportez le tableau d'amortissement depuis le site de votre banque au format CSV, puis choisissez le fichier. Vous indiquerez ensuite quelles colonnes correspondent à la date, au capital, aux intérêts et à l'assurance.</p>
+  <div class="champ"><label for="fichier">Fichier CSV (1 Mo maximum)</label><input id="fichier" type="file" name="fichier" accept=".csv,text/csv" required></div>
+  <div class="actions"><button class="bouton principal" type="submit">Continuer</button><a class="bouton" href="{{ pret.get_absolute_url }}">Annuler</a></div>
+</form>
+{% endblock %}

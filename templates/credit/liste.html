@@ -1,0 +1,20 @@
+{% extends "base.html" %}{% load montants %}
+{% block titre %}Crédit{% endblock %}
+{% block contenu %}
+<header class="entete">
+  <div><h1>Crédit</h1><p class="sous-titre">Les intérêts et l'assurance des échéances alimentent la ligne 250.</p></div>
+  <a class="bouton principal" href="{% url 'credit:creer' %}">+ Nouveau prêt</a>
+</header>
+<div class="carte tableau">
+<table>
+  <thead><tr><th>Bien</th><th>Banque</th><th>Début</th><th class="montant">Capital emprunté</th></tr></thead>
+  <tbody>
+  {% for pret in prets %}
+    <tr><td>{{ pret.bien.nom }}</td><td><a href="{{ pret.get_absolute_url }}">{{ pret.banque }}{% if pret.libelle %} — {{ pret.libelle }}{% endif %}</a></td><td>{{ pret.date_debut|date:"d/m/Y" }}</td><td class="montant">{{ pret.capital_emprunte|euros }}</td></tr>
+  {% empty %}
+    <tr><td colspan="4">Aucun prêt pour l'instant.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

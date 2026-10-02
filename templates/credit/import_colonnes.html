@@ -1,0 +1,24 @@
+{% extends "base.html" %}{% load montants %}
+{% block titre %}Importer un échéancier{% endblock %}
+{% block contenu %}
+<header class="entete"><div><h1>Correspondance des colonnes</h1><p class="sous-titre">{{ pret }}</p></div></header>
+<form method="post" class="carte formulaire">
+  {% csrf_token %}
+  {{ form }}
+  <div class="actions">
+    <button class="bouton" type="submit" name="apercu" value="1">Aperçu</button>
+    <button class="bouton principal" type="submit" name="importer" value="1">Importer</button>
+    <a href="?recommencer=1">Choisir un autre fichier</a>
+  </div>
+</form>
+{% if apercu %}
+<section class="carte">
+  <h2>Aperçu : {{ apercu.nombre }} échéances</h2>
+  <p>Capital {{ apercu.capital|euros }} · intérêts {{ apercu.interets|euros }} · assurance {{ apercu.assurance|euros }}</p>
+  <table>
+    <thead><tr><th>Date</th><th class="montant">Capital</th><th class="montant">Intérêts</th><th class="montant">Assurance</th></tr></thead>
+    <tbody>{% for e in apercu.lignes %}<tr><td>{{ e.date|date:"d/m/Y" }}</td><td class="montant">{{ e.capital|euros }}</td><td class="montant">{{ e.interets|euros }}</td><td class="montant">{{ e.assurance|euros }}</td></tr>{% endfor %}</tbody>
+  </table>
+</section>
+{% endif %}
+{% endblock %}

@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     "comptes",
     "biens",
     "operations",
+    "credit",
 ]
 
 MIDDLEWARE = [
