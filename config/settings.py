@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     "axes",
     "commun",
     "comptes",
+    "biens",
 ]
 
 MIDDLEWARE = [
@@ -103,6 +104,9 @@ AXES_FAILURE_LIMIT = 5
 AXES_COOLOFF_TIME = 1  # heure
 AXES_RESET_ON_SUCCESS = True
 AXES_LOCKOUT_PARAMETERS = ["username"]
+# Un seul compte, derrière le reverse proxy de DSM : le blocage par identifiant protège le mot de passe
+# quelle que soit l'adresse IP de l'attaquant (l'IP vue par Django est celle du proxy).
+SILENCED_SYSTEM_CHECKS = ["axes.W006"]
 
 if not DEBUG:
     SESSION_COOKIE_SECURE = True
