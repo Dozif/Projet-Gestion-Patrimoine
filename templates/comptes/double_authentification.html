@@ -2,6 +2,17 @@
 {% block titre %}Double authentification{% endblock %}
 {% block contenu %}
 <h1>Double authentification</h1>
+{% if ferme %}
+<p class="errorlist" role="alert">L'enrôlement d'un nouveau téléphone est fermé : aucun code d'installation n'est défini dans le fichier .env du serveur.</p>
+{% elif installation %}
+<p>Première connexion : saisissez le <strong>code d'installation</strong> que vous avez inscrit dans le fichier .env du Synology (PATRIMOINE_CODE_INSTALLATION). Le QR code s'affichera ensuite.</p>
+{% if erreur %}<p class="errorlist" role="alert">{{ erreur }}</p>{% endif %}
+<form method="post" class="formulaire">
+  {% csrf_token %}
+  <div class="champ"><label for="code_installation">Code d'installation</label><input id="code_installation" name="code_installation" type="password" autocomplete="off" required autofocus></div>
+  <button class="bouton principal" type="submit">Continuer</button>
+</form>
+{% else %}
 {% if configuration %}
 <p>Scannez ce QR code avec votre application d'authentification (Google Authenticator, Authy…), puis saisissez le code à 6 chiffres affiché.</p>
 <div class="qr">{{ qr_svg|safe }}</div>
@@ -18,5 +29,6 @@
   </div>
   <button class="bouton principal" type="submit">Valider</button>
 </form>
+{% endif %}
 <form method="post" action="{% url 'comptes:deconnexion' %}">{% csrf_token %}<button class="lien" type="submit">Se déconnecter</button></form>
 {% endblock %}
