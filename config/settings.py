@@ -41,6 +41,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -91,7 +92,12 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
-STATIC_ROOT = DATA_DIR / "static"
+STATIC_ROOT = Path(os.environ.get("PATRIMOINE_STATIC_ROOT", BASE_DIR / "staticfiles"))
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+}
+SAUVEGARDES_DIR = DATA_DIR / "sauvegardes"
 # Pas de MEDIA_URL : les justificatifs ne sont servis que par une vue authentifiée.
 MEDIA_ROOT = Path(os.environ.get("PATRIMOINE_MEDIA_DIR", DATA_DIR / "justificatifs"))
 
@@ -112,8 +118,17 @@ AXES_LOCKOUT_PARAMETERS = ["username"]
 # quelle que soit l'adresse IP de l'attaquant (l'IP vue par Django est celle du proxy).
 SILENCED_SYSTEM_CHECKS = ["axes.W006"]
 
+# Enrôlement de la double authentification : en production, le QR code n'est montré qu'après saisie
+# du code d'installation défini dans .env (un mot de passe volé ne suffit pas à enrôler un téléphone).
+PATRIMOINE_CODE_INSTALLATION = os.environ.get("PATRIMOINE_CODE_INSTALLATION", "")
+PATRIMOINE_INSCRIPTION_LIBRE = DEBUG
+
 if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SECURE_HSTS_SECONDS = 31_536_000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    # La redirection HTTPS est faite par le reverse proxy de DSM ; le conteneur n'écoute qu'en local (127.0.0.1).
+    # Le préchargement HSTS engagerait tout le domaine du propriétaire : volontairement non activé.
+    SILENCED_SYSTEM_CHECKS += ["security.W008", "security.W021"]
