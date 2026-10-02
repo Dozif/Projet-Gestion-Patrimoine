@@ -4,6 +4,7 @@
 <header class="entete">
   <div><h1>Opérations</h1><p class="sous-titre">{{ annee }} · classées par date de paiement</p></div>
   <div class="actions">
+    <a class="bouton" href="{% url 'operations:creer_releve' %}">Saisir un relevé d'agence</a>
     <a class="bouton principal" href="{% url 'operations:creer' %}">+ Nouvelle opération</a>
   </div>
 </header>
@@ -39,7 +40,7 @@
       <td>{{ op.categorie.ligne_2044|default:"—" }}</td>
       <td><span class="badge {{ op.categorie.classe_badge }}">{{ op.categorie.get_nature_display }}</span></td>
       <td class="montant">{{ op.montant|euros }}</td>
-      <td><a href="{% url 'operations:modifier' op.pk %}">Modifier</a></td>
+      <td>{% if op.releve_id %}<a href="{% url 'operations:modifier_releve' op.releve_id %}">Relevé</a>{% else %}<a href="{% url 'operations:modifier' op.pk %}">Modifier</a>{% endif %}</td>
     </tr>
   {% empty %}
     <tr><td colspan="7">Aucune opération pour ces critères.</td></tr>

@@ -9,9 +9,11 @@ from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from biens.models import Bien
+from commun.montants import format_euros
 
-from .forms import OperationForm
-from .models import NatureOperation, Operation
+from .forms import OperationForm, ReleveForm
+from .models import NatureOperation, Operation, ReleveAgence
+from .services import enregistrer_releve
 
 FILTRES_NATURE = {
     "recettes": [NatureOperation.RECETTE_IMPOSABLE, NatureOperation.RECETTE_NON_IMPOSABLE],
@@ -96,6 +98,32 @@ def supprimer(request, pk):
     operation.delete()
     messages.success(request, "Opération supprimée.")
     return redirect(f"{reverse('operations:liste')}?annee={annee}")
+
+
+def creer_releve(request):
+    return _formulaire_releve(request, ReleveAgence())
+
+
+def modifier_releve(request, pk):
+    return _formulaire_releve(request, get_object_or_404(ReleveAgence, pk=pk))
+
+
+def _formulaire_releve(request, releve):
+    form = ReleveForm(request.POST or None, instance=releve)
+    if request.method == "POST" and form.is_valid():
+        releve = form.save(commit=False)
+        operations = enregistrer_releve(releve)
+        messages.success(
+            request,
+            f"{len(operations)} opérations enregistrées (net versé : {format_euros(releve.net_verse)}).",
+        )
+        return redirect(f"{reverse('operations:liste')}?annee={releve.date_versement.year}")
+    return render(request, "commun/formulaire.html", {
+        "form": form,
+        "titre": "Relevé d'agence",
+        "intro": "Le relevé est découpé en loyer brut (ligne 211), charges (non imposables) et honoraires (ligne 221).",
+        "retour": reverse("operations:liste"),
+    })
 
 
 def justificatif(request, pk):
