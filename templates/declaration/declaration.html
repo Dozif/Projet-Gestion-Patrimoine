@@ -17,14 +17,26 @@
     {% if not erreur %}
     <a class="bouton" href="{% url 'declaration:export_csv' annee %}">Exporter CSV</a>
     <button class="bouton" type="button" onclick="window.print()">Imprimer / PDF</button>
-    {# actions-figer #}
+    {% if figee %}
+    <form method="post" action="{% url 'declaration:defiger' annee %}">{% csrf_token %}<button class="bouton" type="submit">Défiger</button></form>
+    {% else %}
+    <form method="post" action="{% url 'declaration:figer' annee %}">{% csrf_token %}<button class="bouton principal" type="submit">Figer la déclaration</button></form>
+    {% endif %}
     {% endif %}
   </div>
 </header>
 {% if erreur %}
 <div class="alerte attention" role="alert"><div><strong>Calcul impossible pour {{ annee }}</strong><span class="helptext">{{ erreur }}</span></div></div>
 {% else %}
-{# alerte-modifiee #}
+{% if modifiee %}
+<div class="alerte attention" role="alert">
+  <div>
+    <strong>Des données de {{ annee }} ont changé depuis que la déclaration a été figée le {{ figee.figee_le|date:"d/m/Y" }}.</strong>
+    <span class="helptext">Cases figées : {% for code, montant in figee.donnees.cases.items %}{{ code }} {{ montant|euros_entiers }}{% if not forloop.last %} · {% endif %}{% endfor %}. Vérifiez puis figez à nouveau si la déclaration a été corrigée.</span>
+  </div>
+  <form method="post" action="{% url 'declaration:figer' annee %}" class="no-print">{% csrf_token %}<button class="bouton" type="submit">Figer à nouveau</button></form>
+</div>
+{% endif %}
 <div class="decl">
   <div class="carte tableau">
     <table>

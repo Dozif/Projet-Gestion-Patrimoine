@@ -1,7 +1,10 @@
 from datetime import date
 
+from django.contrib import messages
 from django.http import Http404, HttpResponse
-from django.shortcuts import render
+from django.shortcuts import redirect, render
+from django.urls import reverse
+from django.views.decorators.http import require_POST
 
 from biens.models import Bien
 from commun.annees import annee_demandee
@@ -9,7 +12,17 @@ from fiscal.pinel import reduction_annee
 from fiscalite.models import Configuration, ParametresAnnuels
 from fiscalite.services import ParametresManquants, calculer_annee
 
-from .presentation import cases_2042, colonnes_biens, detail_ligne, ecrire_csv, estimation_impot, lignes_declaration
+from .models import DeclarationFigee
+from .presentation import (
+    cases_2042,
+    colonnes_biens,
+    detail_ligne,
+    ecrire_csv,
+    empreinte,
+    estimation_impot,
+    lignes_declaration,
+    resultat_vers_dict,
+)
 from .suivi import alerte_loyers, alertes_pinel, etat_loyers, resume_pinel
 
 
@@ -78,7 +91,31 @@ def declaration(request):
         cases=cases_2042(resultat),
         pinel=[p for p in pinel if p["reduction"]],
     )
+    figee = DeclarationFigee.objects.filter(annee=annee).first()
+    actuelle = empreinte(resultat_vers_dict(resultat, contexte_fiscal))
+    contexte.update(figee=figee, modifiee=bool(figee and figee.empreinte != actuelle))
     return render(request, "declaration/declaration.html", contexte)
+
+
+@require_POST
+def figer(request, annee):
+    try:
+        resultat, contexte_fiscal = calculer_annee(annee)
+    except (ParametresManquants, ValueError) as erreur:
+        raise Http404(str(erreur)) from None
+    donnees = resultat_vers_dict(resultat, contexte_fiscal)
+    DeclarationFigee.objects.update_or_create(
+        annee=annee, defaults={"donnees": donnees, "empreinte": empreinte(donnees)}
+    )
+    messages.success(request, f"Déclaration {annee} figée : elle sert de référence pour ce qui a été déclaré.")
+    return redirect(f"{reverse('declaration:declaration')}?annee={annee}")
+
+
+@require_POST
+def defiger(request, annee):
+    DeclarationFigee.objects.filter(annee=annee).delete()
+    messages.success(request, f"Déclaration {annee} défigée.")
+    return redirect(f"{reverse('declaration:declaration')}?annee={annee}")
 
 
 def export_csv(request, annee):
