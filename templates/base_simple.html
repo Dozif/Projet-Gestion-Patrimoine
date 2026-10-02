@@ -1,0 +1,18 @@
+{% load static %}<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block titre %}Patrimoine{% endblock %} · Patrimoine</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+<link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body>
+<main class="simple">
+  <div class="carte">
+    {% if messages %}<ul class="messages">{% for m in messages %}<li class="message {{ m.tags }}">{{ m }}</li>{% endfor %}</ul>{% endif %}
+    {% block contenu %}{% endblock %}
+  </div>
+</main>
+</body>
+</html>

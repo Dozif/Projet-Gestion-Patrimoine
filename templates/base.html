@@ -1,0 +1,33 @@
+{% load static %}<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block titre %}Patrimoine{% endblock %} · Patrimoine</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+<link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body>
+<div class="shell">
+  <aside class="side">
+    <a class="marque" href="{% url 'accueil' %}">
+      <span class="logo" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg></span>
+      <span><strong>Patrimoine</strong><small>Revenus fonciers</small></span>
+    </a>
+    <nav aria-label="Navigation principale">
+      {% for e in navigation %}<a href="{{ e.url }}"{% if e.actif %} class="actif" aria-current="page"{% endif %}>{{ e.libelle }}</a>{% endfor %}
+    </nav>
+    <form method="post" action="{% url 'comptes:deconnexion' %}" class="compte">
+      {% csrf_token %}
+      <strong>{{ user.get_username }}</strong>
+      <span class="helptext">Double authentification active</span>
+      <button type="submit" class="lien">Se déconnecter</button>
+    </form>
+  </aside>
+  <main class="main">
+    {% if messages %}<ul class="messages">{% for m in messages %}<li class="message {{ m.tags }}">{{ m }}</li>{% endfor %}</ul>{% endif %}
+    {% block contenu %}{% endblock %}
+  </main>
+</div>
+</body>
+</html>
