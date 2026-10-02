@@ -13,8 +13,20 @@ from .modeles import (
     ParametresAnnuels,
     en_euros,
 )
+from .pinel import (
+    EngagementPinel,
+    PeriodePinel,
+    base_reduction,
+    fin_engagement,
+    plafond_loyer_mensuel,
+    reduction_annee,
+    reduction_cumulee,
+    reduction_totale,
+)
 
 __all__ = [
+    "EngagementPinel", "PeriodePinel", "base_reduction", "fin_engagement", "plafond_loyer_mensuel",
+    "reduction_annee", "reduction_cumulee", "reduction_totale",
     "REGIME_FONCIER_REEL", "Bien", "CalculateurFoncierReel", "DeficitReportable", "Explication",
     "LigneCalculee", "Nature", "Operation", "ParametresAnnuels", "ResultatBien", "ResultatDeficit",
     "ResultatFoncier", "appliquer_deficits", "calculateur_pour", "calculer_bien", "en_euros",
