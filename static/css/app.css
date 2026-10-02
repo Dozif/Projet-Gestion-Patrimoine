@@ -64,3 +64,21 @@ dl.infos dd{margin:0;font-weight:600}
 .qr svg{width:220px;height:220px;background:#FFFFFF;padding:8px;border-radius:8px}
 code.cle{word-break:break-all}
 @media (max-width:900px){.shell{grid-template-columns:1fr}.side{border-right:none;border-bottom:1px solid var(--ligne)}.side nav{flex-direction:row;flex-wrap:wrap}.main{padding:20px 16px}}
+:root{--attention:#B4410C;--attention-fond:#FBEEDC}
+@media (prefers-color-scheme:dark){:root{--attention:#F0A36B;--attention-fond:#3A2A16}}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.pile{display:flex;flex-direction:column;gap:12px}
+.ligne-resume{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.ligne-resume h2{margin:0}
+.ligne-resume.total{padding-top:8px;border-top:1px solid var(--ligne)}
+.lignes-mois{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:4px}
+.mois{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;color:var(--attenue)}
+.mois i{display:block;width:100%;height:10px;border-radius:3px;border:1px solid var(--ligne)}
+.mois.encaisse i{background:var(--accent);border-color:var(--accent)}
+.mois.manquant i{background:var(--attention);border-color:var(--attention)}
+.alerte{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px;border-radius:10px;background:var(--ri-fond)}
+.alerte strong{display:block}
+.alerte.attention{background:var(--attention-fond)}
+.alerte.ok{background:var(--d-fond)}
+.barre{height:10px;border-radius:999px;background:var(--ligne);overflow:hidden}
+.barre span{display:block;height:100%;background:var(--accent)}

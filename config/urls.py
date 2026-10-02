@@ -1,10 +1,10 @@
 from django.contrib import admin
 from django.urls import include, path
 
-from commun.views import accueil
+from declaration.views import tableau_de_bord
 
 urlpatterns = [
-    path("", accueil, name="accueil"),
+    path("", tableau_de_bord, name="accueil"),
     path("compte/", include("comptes.urls")),
     path("biens/", include("biens.urls")),
     path("operations/", include("operations.urls")),

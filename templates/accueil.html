@@ -1,8 +1,0 @@
-{% extends "base.html" %}
-{% block titre %}Tableau de bord{% endblock %}
-{% block contenu %}
-<header class="entete"><div><h1>Tableau de bord</h1><p class="sous-titre">Le tableau de bord chiffré arrive avec la prochaine étape.</p></div></header>
-<div class="grille">
-  {% for e in navigation %}{% if not forloop.first %}<a class="carte lien-carte" href="{{ e.url }}"><strong>{{ e.libelle }}</strong></a>{% endif %}{% endfor %}
-</div>
-{% endblock %}

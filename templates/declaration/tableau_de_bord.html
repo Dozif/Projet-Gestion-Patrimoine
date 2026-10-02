@@ -1,0 +1,70 @@
+{% extends "base.html" %}{% load montants %}
+{% block titre %}Tableau de bord{% endblock %}
+{% block contenu %}
+<header class="entete">
+  <div>
+    <h1>Tableau de bord</h1>
+    <p class="sous-titre">Année {{ annee }}{% if annee == annee_courante %} en cours — chiffres provisoires au {{ aujourd_hui|date:"d/m/Y" }}{% endif %}</p>
+  </div>
+  <div class="actions no-print">
+    <form method="get" class="filtres">
+      <div class="champ">
+        <label for="annee">Année</label>
+        <select id="annee" name="annee">{% for a in annees %}<option value="{{ a }}"{% if a == annee %} selected{% endif %}>{{ a }}</option>{% endfor %}</select>
+      </div>
+      <button class="bouton" type="submit">Afficher</button>
+    </form>
+    <a class="bouton principal" href="{% url 'operations:creer' %}">+ Nouvelle opération</a>
+  </div>
+</header>
+{% if erreur %}
+<div class="alerte attention" role="alert"><div><strong>Calcul impossible pour {{ annee }}</strong><span class="helptext">{{ erreur }}</span></div></div>
+{% else %}
+<div class="kpis">
+  <div class="carte"><span class="sous-titre">Loyers et recettes</span><strong class="chiffre">{{ resultat.total_recettes|euros }}</strong><span class="helptext">Ligne 215 · {{ cartes|length }} bien{{ cartes|length|pluralize }}</span></div>
+  <div class="carte"><span class="sous-titre">Charges déductibles</span><strong class="chiffre">{{ resultat.total_frais|euros }}</strong><span class="helptext">Ligne 240</span></div>
+  <div class="carte"><span class="sous-titre">Intérêts d'emprunt</span><strong class="chiffre">{{ resultat.total_interets|euros }}</strong><span class="helptext">Ligne 250</span></div>
+  <div class="carte">
+    <span class="sous-titre">Résultat foncier</span>
+    <strong class="chiffre{% if resultat.resultat_global < 0 %} negatif{% endif %}">{{ resultat.resultat_global|euros }}</strong>
+    <span class="helptext">{% if estimation.economie %}Économie d'impôt estimée ≈ {{ estimation.economie|euros }} (TMI {{ parametres.tmi }} %){% else %}Impôt estimé ≈ {{ estimation.impot|euros }} (TMI {{ parametres.tmi }} % + prélèvements sociaux {{ parametres.taux_prelevements_sociaux }} %){% endif %}</span>
+  </div>
+</div>
+<div class="grille">
+  {% for c in cartes %}
+  <section class="carte pile">
+    <div class="ligne-resume"><div><h2>{{ c.bien.nom }}</h2><span class="helptext">{{ c.bien.get_regime_display }}</span></div>{% if c.bien.pinel %}<span class="badge accent">Pinel</span>{% endif %}</div>
+    <div class="ligne-resume"><span>Recettes</span><strong>{{ c.recettes|euros }}</strong></div>
+    <div class="ligne-resume"><span>Charges déductibles</span><strong>{{ c.frais|euros }}</strong></div>
+    <div class="ligne-resume"><span>Intérêts d'emprunt</span><strong>{{ c.interets|euros }}</strong></div>
+    <div class="ligne-resume total"><span>Résultat</span><strong{% if c.resultat < 0 %} class="negatif"{% endif %}>{{ c.resultat|euros }}</strong></div>
+    <span class="helptext">Loyers encaissés en {{ annee }}</span>
+    <div class="lignes-mois">
+      {% for m in c.loyers %}<div class="mois {{ m.etat }}" title="{{ m.nom }} : {{ m.libelle }}"><i aria-hidden="true"></i><span aria-hidden="true">{{ m.initiale }}</span><span class="sr">{{ m.nom }} : {{ m.libelle }}</span></div>{% endfor %}
+    </div>
+  </section>
+  {% empty %}
+  <section class="carte"><p>Aucun bien pour l'instant. <a href="{% url 'biens:creer' %}">Ajouter un bien</a>.</p></section>
+  {% endfor %}
+</div>
+<div class="grille">
+  <section class="carte pile">
+    <h2>À surveiller</h2>
+    {% for a in alertes %}<div class="alerte {{ a.niveau }}"><div><strong>{{ a.titre }}</strong><span class="helptext">{{ a.texte }}</span></div></div>{% empty %}<p>Rien à signaler.</p>{% endfor %}
+  </section>
+  {% for p in pinels %}
+  <section class="carte pile">
+    <div class="ligne-resume"><h2>Pinel — {{ p.bien.nom }}</h2><span class="helptext">Fin d'engagement : {{ p.fin|date:"d/m/Y" }}</span></div>
+    <div class="ligne-resume"><span class="helptext">Réduction obtenue</span><strong>{{ p.cumul|euros }} sur {{ p.total|euros }}</strong></div>
+    <div class="barre" role="img" aria-label="{{ p.pourcentage }} % de la réduction obtenue"><span style="width: {{ p.pourcentage }}%"></span></div>
+    <div class="ligne-resume"><span>Réduction {{ annee }}</span><strong>{{ p.reduction_annee|euros }}</strong></div>
+    {% if p.plafond %}
+    <div class="alerte {% if p.depasse %}attention{% else %}ok{% endif %}"><div><strong>Loyer {{ p.loyer|euros }} {% if p.depasse %}&gt;{% else %}≤{% endif %} plafond {{ p.plafond|euros }}</strong><span class="helptext">Zone {{ p.zone }}</span></div></div>
+    {% else %}
+    <p class="helptext">Plafond de loyer de la zone {{ p.zone }} non renseigné dans les paramètres {{ annee }}.</p>
+    {% endif %}
+  </section>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}
