@@ -41,3 +41,12 @@ def test_defiger(client_verifie, demo):
     client_verifie.post(reverse("declaration:figer", args=[2025]))
     client_verifie.post(reverse("declaration:defiger", args=[2025]))
     assert not DeclarationFigee.objects.exists()
+
+
+def test_nouveau_bien_apres_gel_sans_fausse_alerte(client_verifie, demo):
+    from decimal import Decimal
+    client_verifie.post(reverse("declaration:figer", args=[2025]))
+    Bien.objects.create(nom="Studio acheté en 2026", surface_habitable=Decimal("20"))
+    contenu = client_verifie.get(PAGE).content.decode()
+    assert "ont changé" not in contenu
+    assert "Studio acheté en 2026" not in contenu

@@ -21,15 +21,34 @@ CASES = (
 )
 
 
+RECETTES = ("211", "212", "213", "214")
+FRAIS = ("221", "222", "223", "224", "225", "226", "227", "229")
+
+
+def biens_actifs(resultat) -> list:
+    """Biens ayant au moins un montant dans l'année (un bien acheté plus tard n'apparaît pas)."""
+    return [b for b in resultat.biens if b.resultat or any(ligne.montant for ligne in b.lignes.values())]
+
+
 def colonnes_biens(resultat, contexte) -> list[str]:
     noms = {b.id: b.nom for b in contexte.biens}
-    return [noms[r.bien_id] for r in resultat.biens]
+    return [noms[r.bien_id] for r in biens_actifs(resultat)]
+
+
+def _montants_arrondis(bien) -> dict:
+    """Lignes saisies arrondies à l'euro, totaux recalculés à partir de ces arrondis (comme sur la 2044)."""
+    m = {code: en_euros(bien.lignes[code].montant) * 100 for code in ORDRE if code not in TOTAUX}
+    m["215"] = sum(m[c] for c in RECETTES)
+    m["240"] = sum(m[c] for c in FRAIS) - m["230"]
+    m["resultat"] = m["215"] - m["240"] - m["250"]
+    return m
 
 
 def lignes_declaration(resultat) -> list[dict]:
+    par_bien = [_montants_arrondis(b) for b in biens_actifs(resultat)]
     lignes = []
     for code in ORDRE:
-        valeurs = [b.lignes[code].montant for b in resultat.biens]
+        valeurs = [m[code] for m in par_bien]
         if code == "230":
             valeurs = [-v for v in valeurs]
         if code not in TOUJOURS and not any(valeurs):
@@ -38,7 +57,7 @@ def lignes_declaration(resultat) -> list[dict]:
             "code": code, "libelle": LIGNES[code][0], "valeurs": valeurs, "total": sum(valeurs),
             "type": "total" if code in TOTAUX else "ligne",
         })
-    valeurs = [b.resultat for b in resultat.biens]
+    valeurs = [m["resultat"] for m in par_bien]
     lignes.append(
         {"code": "", "libelle": "Résultat foncier", "valeurs": valeurs, "total": sum(valeurs), "type": "resultat"}
     )
@@ -83,10 +102,12 @@ def estimation_impot(revenu_net: int, deficit_global: int, tmi: Decimal, taux_ps
 def resultat_vers_dict(resultat, contexte) -> dict:
     return {
         "annee": resultat.annee,
-        "biens": [
-            {"nom": nom, "lignes": {code: bien.lignes[code].montant for code in ORDRE}, "resultat": bien.resultat}
-            for nom, bien in zip(colonnes_biens(resultat, contexte), resultat.biens, strict=True)
-        ],
+        "biens": {
+            str(bien.bien_id): {
+                "lignes": {code: bien.lignes[code].montant for code in ORDRE}, "resultat": bien.resultat
+            }
+            for bien in biens_actifs(resultat)
+        },
         "cases": {c["code"]: c["montant"] for c in cases_2042(resultat)},
         "deficits_apres": [[d.annee_origine, d.montant] for d in resultat.deficit.deficits_apres],
     }

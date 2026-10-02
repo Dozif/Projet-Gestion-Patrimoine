@@ -60,6 +60,8 @@
     <div class="ligne-resume"><span>Réduction {{ annee }}</span><strong>{{ p.reduction_annee|euros }}</strong></div>
     {% if p.plafond %}
     <div class="alerte {% if p.depasse %}attention{% else %}ok{% endif %}"><div><strong>Loyer {{ p.loyer|euros }} {% if p.depasse %}&gt;{% else %}≤{% endif %} plafond {{ p.plafond|euros }}</strong><span class="helptext">Zone {{ p.zone }}</span></div></div>
+    {% elif p.plafond_invalide %}
+    <div class="alerte attention"><div><strong>Plafond Pinel de la zone {{ p.zone }} mal renseigné</strong><span class="helptext">Dans Paramètres, indiquez-le en centimes entiers par m² (13,49 €/m² → 1349).</span></div></div>
     {% else %}
     <p class="helptext">Plafond de loyer de la zone {{ p.zone }} non renseigné dans les paramètres {{ annee }}.</p>
     {% endif %}

@@ -52,3 +52,10 @@ def test_changer_la_premiere_annee_puis_saisir_un_deficit(client_verifie):
     })
     assert r.status_code == 302
     assert DeficitAnterieur.objects.get().montant == 240_000
+
+
+@pytest.mark.parametrize("plafonds", [{"A": 13.49}, {"A": "1349"}, {"A": -5}, ["A"]])
+def test_plafonds_pinel_en_centimes_entiers(plafonds):
+    from django.core.exceptions import ValidationError
+    with pytest.raises(ValidationError, match="centimes"):
+        ParametresAnnuels(annee=2030, plafonds_pinel_m2=plafonds).full_clean()

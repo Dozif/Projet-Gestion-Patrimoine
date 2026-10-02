@@ -2,6 +2,8 @@
 
 from datetime import date, timedelta
 
+from django.db.models import Q
+
 from commun.montants import format_euros
 from fiscal.pinel import fin_engagement, plafond_loyer_mensuel, reduction_annee, reduction_cumulee, reduction_totale
 from operations.models import NatureOperation, Operation
@@ -13,17 +15,22 @@ NOMS_MOIS = (
 LIBELLES_ETAT = {"encaisse": "encaissé", "manquant": "non saisi", "a_venir": "à venir", "sans_bail": "pas de bail"}
 
 
+def plafond_m2_valide(valeur) -> bool:
+    """Un plafond Pinel se saisit en centimes par m² : entier strictement positif."""
+    return isinstance(valeur, int) and not isinstance(valeur, bool) and valeur > 0
+
+
 def _dernier_jour(annee: int, mois: int) -> date:
     return date(annee + mois // 12, mois % 12 + 1, 1) - timedelta(days=1)
 
 
 def etat_loyers(bien, annee: int, aujourd_hui: date) -> list[dict]:
-    encaisses = set(
-        Operation.objects.filter(
-            bien=bien, date_paiement__year=annee,
-            categorie__nature=NatureOperation.RECETTE_IMPOSABLE, categorie__ligne_2044="211",
-        ).values_list("date_paiement__month", flat=True)
-    )
+    # Un loyer versé par l'agence compte pour le mois de son relevé, même s'il est versé le mois suivant.
+    loyers = Operation.objects.filter(
+        Q(releve__isnull=True, date_paiement__year=annee) | Q(releve__periode__year=annee),
+        bien=bien, categorie__nature=NatureOperation.RECETTE_IMPOSABLE, categorie__ligne_2044="211",
+    ).select_related("releve")
+    encaisses = {(o.releve.periode if o.releve_id else o.date_paiement).month for o in loyers}
     etats = []
     for mois in range(1, 13):
         debut, fin = date(annee, mois, 1), _dernier_jour(annee, mois)
@@ -61,10 +68,11 @@ def resume_pinel(bien, annee: int, aujourd_hui: date, plafonds_m2: dict) -> dict
     total = reduction_totale(e)
     cumul = reduction_cumulee(e, annee)
     bail = bien.bail_en_cours(aujourd_hui)
-    plafond_m2 = (plafonds_m2 or {}).get(engagement.zone)
+    plafond_m2 = plafonds_m2.get(engagement.zone) if isinstance(plafonds_m2, dict) else None
+    plafond_invalide = plafond_m2 is not None and not plafond_m2_valide(plafond_m2)
     plafond = (
-        plafond_loyer_mensuel(int(plafond_m2), bien.surface_habitable, bien.surface_annexes)
-        if plafond_m2 and bail else None
+        plafond_loyer_mensuel(plafond_m2, bien.surface_habitable, bien.surface_annexes)
+        if plafond_m2 is not None and not plafond_invalide and bail else None
     )
     return {
         "bien": bien,
@@ -76,6 +84,7 @@ def resume_pinel(bien, annee: int, aujourd_hui: date, plafonds_m2: dict) -> dict
         "fin": fin_engagement(e),
         "loyer": bail.loyer_hc if bail else None,
         "plafond": plafond,
+        "plafond_invalide": plafond_invalide,
         "depasse": bool(plafond and bail.loyer_hc > plafond),
     }
 

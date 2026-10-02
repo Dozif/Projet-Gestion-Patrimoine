@@ -75,7 +75,7 @@ def test_cases_2042(calcul_2025):
 def test_serialisation_et_empreinte_stable(calcul_2025):
     donnees = resultat_vers_dict(*calcul_2025)
     assert donnees["cases"]["4BC"] == 90_600
-    assert donnees["biens"][0]["nom"] == "T2 Les Tilleuls"
+    assert len(donnees["biens"]) == 2
     assert empreinte(donnees) == empreinte(resultat_vers_dict(*calculer_annee(2025)))
 
 
@@ -87,3 +87,28 @@ def test_empreinte_change_si_les_donnees_changent(calcul_2025):
         montant=10_000, libelle="Peinture",
     )
     assert empreinte(resultat_vers_dict(*calculer_annee(2025))) != avant
+
+
+def test_colonnes_justes_avec_les_arrondis(calcul_2025):
+    for bien in calcul_2025[1].biens:
+        Operation.objects.create(
+            bien_id=bien.id, categorie=Categorie.objects.get(code="travaux"), date_paiement=date(2025, 11, 2),
+            montant=49, libelle="Petite fourniture",
+        )
+    resultat, _ = calculer_annee(2025)
+    lignes = {ligne["code"]: ligne for ligne in lignes_declaration(resultat)}
+    assert lignes["224"]["valeurs"] == [0, 640_000]
+    assert lignes["224"]["total"] == 640_000
+    assert lignes["240"]["valeurs"] == [225_100, 932_500]
+    assert lignes[""]["valeurs"] == [300_900, -391_500]
+    assert lignes[""]["total"] == -90_600
+
+
+def test_bien_sans_activite_ignore(calcul_2025):
+    from biens.models import Bien
+    avant = empreinte(resultat_vers_dict(*calcul_2025))
+    Bien.objects.create(nom="Studio acheté en 2026", surface_habitable=Decimal("20"))
+    Bien.objects.filter(nom="T3 Centre").update(nom="T3 Centre-ville")
+    resultat, contexte = calculer_annee(2025)
+    assert colonnes_biens(resultat, contexte) == ["T2 Les Tilleuls", "T3 Centre-ville"]
+    assert empreinte(resultat_vers_dict(resultat, contexte)) == avant

@@ -34,6 +34,16 @@ class ParametresAnnuels(models.Model):
     def __str__(self):
         return f"Paramètres {self.annee}"
 
+    def clean(self):
+        plafonds = self.plafonds_pinel_m2
+        valides = isinstance(plafonds, dict) and all(
+            isinstance(v, int) and not isinstance(v, bool) and v > 0 for v in plafonds.values()
+        )
+        if not valides:
+            raise ValidationError({
+                "plafonds_pinel_m2": 'Indiquez les plafonds en centimes entiers par m², par zone : {"A": 1349}.'
+            })
+
     def vers_fiscal(self) -> fiscal.ParametresAnnuels:
         return fiscal.ParametresAnnuels(
             annee=self.annee, plafond_imputation_revenu_global=self.plafond_imputation,

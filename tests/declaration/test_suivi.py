@@ -70,3 +70,20 @@ def test_fin_d_engagement_proche(t2):
     alertes = alertes_pinel(resume_pinel(t2, 2026, AUJOURD_HUI, {}), AUJOURD_HUI)
     assert any("31/12/2026" in a["titre"] for a in alertes)
     assert resume_pinel(creer_bien("Sans Pinel"), 2026, AUJOURD_HUI, {}) is None
+
+
+def test_loyer_verse_par_l_agence_le_mois_suivant():
+    from operations.models import ReleveAgence
+    from operations.services import enregistrer_releve
+    b = bien_loue()
+    enregistrer_releve(ReleveAgence(
+        bien=b, periode=date(2025, 12, 1), date_versement=date(2026, 1, 10), loyer_brut=62_000
+    ))
+    assert etat_loyers(b, 2025, AUJOURD_HUI)[11]["etat"] == "encaisse"
+    assert etat_loyers(b, 2026, AUJOURD_HUI)[0]["etat"] == "manquant"
+
+
+def test_plafond_pinel_mal_renseigne(t2):
+    resume = resume_pinel(t2, 2025, AUJOURD_HUI, {"A": "13,49"})
+    assert resume["plafond"] is None
+    assert resume["plafond_invalide"] is True
