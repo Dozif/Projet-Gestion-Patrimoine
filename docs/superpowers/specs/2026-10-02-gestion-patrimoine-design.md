@@ -114,14 +114,14 @@ Toutes les opérations sont rattachées à l'année de **paiement / encaissement
 
 Soit `R` = total recettes, `F` = total frais (240), `I` = total intérêts (250), `res = R − F − I`.
 
-- **Si `res ≥ 0`** : imputer les déficits antérieurs non expirés, du plus ancien au plus récent, dans la limite de `res`. Revenu imposable = `res` − imputations → **4BA**.
+- **Si `res ≥ 0`** : `res` → **4BA** (résultat avant imputation des déficits antérieurs). Le moteur impute en parallèle les déficits antérieurs non expirés, du plus ancien au plus récent, pour tenir le stock à jour et estimer le revenu net (`revenu_net_estime`) ; l'administration fait elle-même cette imputation à partir de 4BD : ne jamais la déduire une seconde fois de 4BA.
 - **Si `res < 0`** :
   - part due aux intérêts : `max(0, I − R)` → reportable sur les revenus fonciers des 10 années suivantes ;
   - part due aux autres charges : `|res| − max(0, I − R)` → imputable sur le revenu global dans la limite du plafond (10 700 €) → **4BC** ; l'excédent est reportable → ajouté au déficit reportable de l'année ;
   - déficit reportable de l'année → **4BB** ; les déficits antérieurs ne sont pas consommés.
-- **4BD** : déficits antérieurs restant à imputer (non expirés) après l'opération.
+- **4BD** : total des déficits antérieurs non expirés disponibles au début de l'année (avant imputation). À vérifier chaque année sur la notice 2044.
 - **Alerte** : si un montant a été imputé sur le revenu global l'année N, le bien doit rester loué jusqu'au 31/12/N+3 ; date affichée sur le tableau de bord.
-- **Estimation facultative** : impôt sur revenu foncier ≈ 4BA × (TMI + taux PS), et économie d'impôt ≈ 4BC × TMI.
+- **Estimation facultative** : impôt sur revenu foncier ≈ `revenu_net_estime` × (TMI + taux PS), et économie d'impôt ≈ 4BC × TMI.
 
 ### 5.3 Pinel
 

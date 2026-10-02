@@ -2,7 +2,7 @@ from datetime import date
 
 import pytest
 
-from fiscal.modeles import Nature, Operation, en_euros
+from fiscal.modeles import Bien, Nature, Operation, en_euros
 
 
 def op(**kw):
@@ -49,3 +49,25 @@ def test_regularisation_et_interets():
 @pytest.mark.parametrize("centimes,euros", [(15050, 151), (15049, 150), (-15050, -151), (0, 0)])
 def test_en_euros_arrondi_au_plus_proche(centimes, euros):
     assert en_euros(centimes) == euros
+
+
+def test_montant_decimal_refuse():
+    with pytest.raises(ValueError, match="entier"):
+        op(montant=12.5)
+
+
+def test_nature_inconnue_refusee():
+    with pytest.raises(ValueError, match="Nature inconnue"):
+        op(nature="BIDON")
+
+
+def test_nature_en_texte_convertie():
+    assert op(nature="RECETTE_IMPOSABLE").nature is Nature.RECETTE_IMPOSABLE
+    with pytest.raises(ValueError, match="incompatible"):
+        op(nature="CHARGE_DEDUCTIBLE", ligne_2044="211")
+
+
+@pytest.mark.parametrize("nb", [0, -2])
+def test_bien_sans_local_refuse(nb):
+    with pytest.raises(ValueError, match="local"):
+        Bien(id=1, nom="T2", nb_locaux=nb)

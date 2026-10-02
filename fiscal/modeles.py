@@ -43,12 +43,17 @@ class Operation:
     libelle: str = ""
 
     def __post_init__(self) -> None:
+        if not isinstance(self.montant, int) or isinstance(self.montant, bool):
+            raise ValueError("Le montant d'une opération doit être un nombre entier de centimes.")
         if self.montant <= 0:
             raise ValueError("Le montant d'une opération doit être strictement positif (en centimes).")
-        if self.ligne_2044 not in _LIGNES_PAR_NATURE[self.nature]:
-            raise ValueError(
-                f"Ligne 2044 {self.ligne_2044!r} incompatible avec la nature {self.nature.value}."
-            )
+        try:
+            nature = Nature(self.nature)
+        except ValueError:
+            raise ValueError(f"Nature inconnue : {self.nature!r}.") from None
+        object.__setattr__(self, "nature", nature)
+        if self.ligne_2044 not in _LIGNES_PAR_NATURE[nature]:
+            raise ValueError(f"Ligne 2044 {self.ligne_2044!r} incompatible avec la nature {nature.value}.")
 
 
 @dataclass(frozen=True)
@@ -57,6 +62,10 @@ class Bien:
     nom: str
     regime: str = "FONCIER_REEL"
     nb_locaux: int = 1
+
+    def __post_init__(self) -> None:
+        if self.nb_locaux < 1:
+            raise ValueError("Un bien doit comporter au moins un local.")
 
 
 @dataclass(frozen=True)
