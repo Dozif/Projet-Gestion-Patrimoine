@@ -1,0 +1,25 @@
+{% extends "base.html" %}{% load montants %}
+{% block titre %}Copropriété{% endblock %}
+{% block contenu %}
+<header class="entete"><div><h1>Copropriété</h1><p class="sous-titre">Les appels de fonds se saisissent comme des opérations (ligne 229). Ici, la part non déductible indiquée par le décompte annuel du syndic : elle est reprise en ligne 230 l'année suivante.</p></div></header>
+<div class="grille">
+  <form method="post" class="carte formulaire">
+    {% csrf_token %}
+    <h2>Nouveau décompte</h2>
+    {{ form }}
+    <div class="actions"><button class="bouton principal" type="submit">Enregistrer</button></div>
+  </form>
+  <div class="carte tableau">
+    <table>
+      <thead><tr><th>Année</th><th>Bien</th><th class="montant">Part non déductible</th><th>Reprise</th></tr></thead>
+      <tbody>
+      {% for d in decomptes %}
+        <tr><td><a href="{% url 'fiscalite:modifier_decompte' d.pk %}">{{ d.annee }}</a></td><td>{{ d.bien.nom }}</td><td class="montant">{{ d.part_non_deductible|euros }}</td><td>ligne 230 de {{ d.annee|add:1 }}</td></tr>
+      {% empty %}
+        <tr><td colspan="4">Aucun décompte saisi.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

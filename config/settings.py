@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     "biens",
     "operations",
     "credit",
+    "fiscalite",
 ]
 
 MIDDLEWARE = [

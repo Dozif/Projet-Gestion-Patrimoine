@@ -1,0 +1,32 @@
+{% extends "base.html" %}{% load montants %}
+{% block titre %}Déficits{% endblock %}
+{% block contenu %}
+<header class="entete"><div><h1>Déficits fonciers antérieurs</h1><p class="sous-titre">Saisissez une fois les déficits restant à imputer au 1er janvier {{ configuration.premiere_annee }} (voir votre dernier avis d'imposition). L'application les tient à jour ensuite.</p></div></header>
+<div class="grille">
+  <form method="post" class="carte formulaire">
+    {% csrf_token %}
+    <h2>Première année gérée</h2>
+    {{ form_config }}
+    <div class="actions"><button class="bouton" type="submit" name="configuration" value="1">Enregistrer</button></div>
+  </form>
+  <form method="post" class="carte formulaire">
+    {% csrf_token %}
+    <h2>Ajouter un déficit</h2>
+    {{ form_deficit }}
+    <div class="actions"><button class="bouton principal" type="submit" name="deficit" value="1">Ajouter</button></div>
+  </form>
+</div>
+<div class="carte tableau">
+  <table>
+    <thead><tr><th>Année d'origine</th><th class="montant">Solde au 1er janvier {{ configuration.premiere_annee }}</th><th>Dernière année d'imputation</th><th><span class="sr">Actions</span></th></tr></thead>
+    <tbody>
+    {% for d in deficits %}
+      <tr><td>{{ d.annee_origine }}</td><td class="montant">{{ d.montant|euros }}</td><td>{{ d.annee_origine|add:10 }}</td>
+        <td><form method="post" action="{% url 'fiscalite:supprimer_deficit' d.pk %}">{% csrf_token %}<button class="lien" type="submit">Supprimer</button></form></td></tr>
+    {% empty %}
+      <tr><td colspan="4">Aucun déficit antérieur.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
