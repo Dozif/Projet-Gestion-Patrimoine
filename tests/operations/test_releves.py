@@ -57,3 +57,14 @@ def test_honoraires_superieurs_aux_sommes_recues_refuses(client_verifie):
     })
     assert r.status_code == 200
     assert not ReleveAgence.objects.exists()
+
+
+def test_deux_releves_pour_le_meme_mois_refuses(client_verifie):
+    b = creer_bien()
+    donnees = {
+        "bien": b.pk, "periode": "2025-09", "date_versement": "2025-09-05", "loyer_brut": "620",
+        "charges_recues": "", "honoraires": "", "commentaire": "",
+    }
+    assert client_verifie.post(reverse("operations:creer_releve"), donnees).status_code == 302
+    assert client_verifie.post(reverse("operations:creer_releve"), donnees).status_code == 200
+    assert ReleveAgence.objects.count() == 1

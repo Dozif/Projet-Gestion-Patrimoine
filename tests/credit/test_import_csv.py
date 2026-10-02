@@ -41,3 +41,27 @@ def test_entetes():
 def test_fichier_sans_echeance():
     with pytest.raises(ErreurImport, match="Aucune échéance"):
         lire_echeancier("Date;Capital;Intérêts\n", Colonnes("Date", "Capital", "Intérêts"))
+
+
+@pytest.mark.parametrize("prefixe", ["\r\n", ";;\r\n"])
+def test_ligne_vide_avant_les_entetes(prefixe):
+    texte = prefixe + "Date;Capital;Intérêts\r\n05/01/2025;1,00;2,00\r\n"
+    assert lire_echeancier(texte, Colonnes("Date", "Capital", "Intérêts")) == [
+        EcheanceLue(date(2025, 1, 5), 100, 200, 0)
+    ]
+
+
+def test_octets_indecodables():
+    with pytest.raises(ErreurImport, match="Encodage"):
+        decoder(b"Date;\x81\x8d")
+
+
+def test_ligne_tronquee_refusee():
+    with pytest.raises(ErreurImport, match="Ligne 2"):
+        lire_echeancier("Date;Capital;Intérêts\n05/01/2025;1\n", Colonnes("Date", "Capital", "Intérêts"))
+
+
+def test_dates_en_double_refusees():
+    texte = "Date;Capital;Intérêts\n05/01/2025;1;1\n05/01/2025;2;2\n"
+    with pytest.raises(ErreurImport, match="en double"):
+        lire_echeancier(texte, Colonnes("Date", "Capital", "Intérêts"))

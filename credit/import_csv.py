@@ -31,10 +31,12 @@ class EcheanceLue:
 
 
 def decoder(contenu: bytes) -> str:
-    try:
-        return contenu.decode("utf-8-sig")
-    except UnicodeDecodeError:
-        return contenu.decode("cp1252")
+    for encodage in ("utf-8-sig", "cp1252"):
+        try:
+            return contenu.decode(encodage)
+        except UnicodeDecodeError:
+            continue
+    raise ErreurImport("Encodage du fichier non reconnu : exportez le tableau en CSV (UTF-8 ou Windows).")
 
 
 def _separateur(texte: str) -> str:
@@ -42,7 +44,16 @@ def _separateur(texte: str) -> str:
     return max((";", "\t", ","), key=entete.count)
 
 
+def _sans_lignes_vides_en_tete(texte: str) -> str:
+    """Retire les lignes vides (ou faites uniquement de séparateurs) avant la ligne d'en-têtes."""
+    lignes = texte.splitlines(keepends=True)
+    while lignes and not lignes[0].strip(" \t\r\n;,"):
+        lignes.pop(0)
+    return "".join(lignes)
+
+
 def lire_entetes(texte: str) -> list[str]:
+    texte = _sans_lignes_vides_en_tete(texte)
     lecteur = csv.reader(io.StringIO(texte), delimiter=_separateur(texte))
     for ligne in lecteur:
         if any(cellule.strip() for cellule in ligne):
@@ -65,6 +76,9 @@ def _montant(valeur: str | None) -> int:
 
 
 def lire_echeancier(texte: str, colonnes: Colonnes) -> list[EcheanceLue]:
+    sans_vides = _sans_lignes_vides_en_tete(texte)
+    retirees = texte.count("\n") - sans_vides.count("\n")
+    texte = sans_vides
     lecteur = csv.DictReader(io.StringIO(texte), delimiter=_separateur(texte))
     entetes = [e.strip() for e in (lecteur.fieldnames or [])]
     lecteur.fieldnames = entetes
@@ -73,18 +87,26 @@ def lire_echeancier(texte: str, colonnes: Colonnes) -> list[EcheanceLue]:
     if manquantes:
         raise ErreurImport(f"Colonnes introuvables : {', '.join(manquantes)}")
     lues = []
+    dates_vues = set()
     for ligne in lecteur:
+        numero = lecteur.line_num + retirees
         if all(not (v or "").strip() for k, v in ligne.items() if k is not None and isinstance(v, str | None)):
             continue
+        if any(ligne[c] is None for c in voulues):
+            raise ErreurImport(f"Ligne {numero} : colonnes manquantes.")
         try:
-            lues.append(EcheanceLue(
+            lue = EcheanceLue(
                 _date(ligne[colonnes.date] or ""),
                 _montant(ligne[colonnes.capital]),
                 _montant(ligne[colonnes.interets]),
                 _montant(ligne[colonnes.assurance]) if colonnes.assurance else 0,
-            ))
+            )
         except ValueError as erreur:
-            raise ErreurImport(f"Ligne {lecteur.line_num} : {erreur}") from None
+            raise ErreurImport(f"Ligne {numero} : {erreur}") from None
+        if lue.date in dates_vues:
+            raise ErreurImport(f"Ligne {numero} : échéance du {lue.date:%d/%m/%Y} en double.")
+        dates_vues.add(lue.date)
+        lues.append(lue)
     if not lues:
         raise ErreurImport("Aucune échéance trouvée dans le fichier.")
     return lues

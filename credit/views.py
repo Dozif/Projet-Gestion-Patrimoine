@@ -60,8 +60,8 @@ def importer(request, pk):
         if fichier.size > TAILLE_MAX_CSV:
             messages.error(request, "Le fichier dépasse 1 Mo.")
             return redirect("credit:importer", pk=pk)
-        texte = decoder(fichier.read())
         try:
+            texte = decoder(fichier.read())
             lire_entetes(texte)
         except ErreurImport as erreur:
             messages.error(request, str(erreur))

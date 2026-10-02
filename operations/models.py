@@ -90,6 +90,7 @@ class ReleveAgence(models.Model):
     class Meta:
         ordering = ["-periode"]
         verbose_name = "relevé d'agence"
+        constraints = [models.UniqueConstraint(fields=["bien", "periode"], name="releve_unique_par_mois")]
 
     def __str__(self):
         return f"Relevé {self.periode:%m/%Y} — {self.bien}"

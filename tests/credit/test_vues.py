@@ -44,3 +44,11 @@ def test_detail_affiche_les_totaux_annuels(client_verifie):
     Echeance.objects.create(pret=pret, date="2025-02-05", capital=61_310, interets=17_255, assurance=1_800)
     contenu = client_verifie.get(reverse("credit:detail", args=[pret.pk])).content.decode()
     assert "381,75 €" in contenu
+
+
+def test_fichier_illisible_sans_erreur_serveur(client_verifie):
+    pret = creer_pret()
+    url = reverse("credit:importer", args=[pret.pk])
+    r = client_verifie.post(url, {"fichier": SimpleUploadedFile("e.csv", b"Date;\x81\x8d")})
+    assert r.status_code == 302
+    assert "Encodage" in client_verifie.get(url).content.decode()
