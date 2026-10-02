@@ -1,0 +1,50 @@
+{% extends "base.html" %}{% load montants %}
+{% block titre %}Opérations{% endblock %}
+{% block contenu %}
+<header class="entete">
+  <div><h1>Opérations</h1><p class="sous-titre">{{ annee }} · classées par date de paiement</p></div>
+  <div class="actions">
+    <a class="bouton principal" href="{% url 'operations:creer' %}">+ Nouvelle opération</a>
+  </div>
+</header>
+<form method="get" class="filtres">
+  <div class="champ">
+    <label for="f-annee">Année</label>
+    <select id="f-annee" name="annee">{% for a in annees %}<option value="{{ a }}"{% if a == annee %} selected{% endif %}>{{ a }}</option>{% endfor %}</select>
+  </div>
+  <div class="champ">
+    <label for="f-bien">Bien</label>
+    <select id="f-bien" name="bien"><option value="">Tous les biens</option>{% for b in biens %}<option value="{{ b.pk }}"{% if b.pk == bien_id %} selected{% endif %}>{{ b.nom }}</option>{% endfor %}</select>
+  </div>
+  <input type="hidden" name="nature" value="{{ nature }}">
+  <button class="bouton" type="submit">Filtrer</button>
+</form>
+<nav class="puces" aria-label="Filtrer par nature">
+  {% for p in puces %}<a href="{{ p.url }}"{% if p.actif %} class="actif" aria-current="true"{% endif %}>{{ p.libelle }}</a>{% endfor %}
+</nav>
+<div class="grille">
+  <div class="carte"><span class="sous-titre">Recettes imposables</span><strong class="chiffre">{{ totaux.recettes|euros }}</strong></div>
+  <div class="carte"><span class="sous-titre">Charges déductibles saisies</span><strong class="chiffre">{{ totaux.deductibles|euros }}</strong><span class="helptext">Hors intérêts des échéances de prêt</span></div>
+  <div class="carte"><span class="sous-titre">Non déductible</span><strong class="chiffre">{{ totaux.non_deductibles|euros }}</strong></div>
+</div>
+<div class="carte tableau">
+<table>
+  <thead><tr><th>Date</th><th>Bien</th><th>Libellé</th><th>Ligne</th><th>Nature</th><th class="montant">Montant</th><th><span class="sr">Actions</span></th></tr></thead>
+  <tbody>
+  {% for op in operations %}
+    <tr>
+      <td>{{ op.date_paiement|date:"d/m/Y" }}</td>
+      <td>{{ op.bien.nom }}</td>
+      <td>{{ op.libelle }}{% if op.justificatif %} · <a href="{% url 'operations:justificatif' op.pk %}">justificatif</a>{% endif %}</td>
+      <td>{{ op.categorie.ligne_2044|default:"—" }}</td>
+      <td><span class="badge {{ op.categorie.classe_badge }}">{{ op.categorie.get_nature_display }}</span></td>
+      <td class="montant">{{ op.montant|euros }}</td>
+      <td><a href="{% url 'operations:modifier' op.pk %}">Modifier</a></td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="7">Aucune opération pour ces critères.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}
