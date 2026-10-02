@@ -1,0 +1,18 @@
+services:
+  patrimoine:
+    build: .
+    image: patrimoine:local
+    container_name: patrimoine
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      PATRIMOINE_DATA_DIR: /data
+    volumes:
+      - ./data:/data
+    ports:
+      - "127.0.0.1:8085:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/compte/connexion/', timeout=5)"]
+      interval: 1m
+      timeout: 10s
+      retries: 3

@@ -657,7 +657,7 @@ Le fichier `.env` réel n'existe que sur le NAS ; vérifier qu'il est bien couve
 - [ ] **Step 3: Vérifier le succès**
 
 Run: `.venv/Scripts/python.exe -m pytest -q && .venv/Scripts/python.exe -m ruff check --fix .`
-Expected: `225 passed`, `All checks passed!`
+Expected: `226 passed`, `All checks passed!`
 
 - [ ] **Step 4: Commit**
 
@@ -790,6 +790,6 @@ Suivre [docs/INSTALLATION-SYNOLOGY.md](docs/INSTALLATION-SYNOLOGY.md). Archive �
 - [ ] **Step 3: Vérifier**
 
 Run: `.venv/Scripts/python.exe -m pytest -q && .venv/Scripts/python.exe -m ruff check --fix . && git add -A && git commit -q -m "docs: guide d'installation Synology et archive" && bash scripts/creer_archive.sh && .venv/Scripts/python.exe -c "import zipfile,glob; n=zipfile.ZipFile(sorted(glob.glob('dist/*.zip'))[-1]).namelist(); print(len(n), any(x.endswith('/.env') for x in n), any('/var/' in x or '/data/' in x for x in n), 'patrimoine/Dockerfile' in n)"`
-Expected: `225 passed`, `All checks passed!`, chemin de l'archive, puis `<nombre> False False True`.
+Expected: `226 passed`, `All checks passed!`, chemin de l'archive, puis `<nombre> False False True`.
 
 - [ ] **Step 4: Commit** (fait à l'étape 3 ; ajouter le message complet avec les lignes d'attribution).
