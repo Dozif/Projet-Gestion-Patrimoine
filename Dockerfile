@@ -13,7 +13,8 @@ COPY . .
 RUN DJANGO_DEBUG=1 python manage.py collectstatic --noinput \
     && useradd --uid 1000 --create-home patrimoine \
     && mkdir -p /data \
-    && chown -R patrimoine:patrimoine /data
+    && chown -R patrimoine:patrimoine /data \
+    && command -v setpriv
 
 EXPOSE 8000
-ENTRYPOINT ["sh", "/app/docker/entrypoint.sh"]
+ENTRYPOINT ["/bin/sh", "/app/docker/entrypoint.sh"]

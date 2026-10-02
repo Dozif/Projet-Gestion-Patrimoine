@@ -1,10 +1,10 @@
 import sqlite3
-from datetime import datetime
 from pathlib import Path
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.db import connection
+from django.utils import timezone
 
 
 class Command(BaseCommand):
@@ -16,7 +16,7 @@ class Command(BaseCommand):
     def handle(self, *args, garder, **options):
         dossier = Path(settings.SAUVEGARDES_DIR)
         dossier.mkdir(parents=True, exist_ok=True)
-        cible = dossier / f"patrimoine-{datetime.now():%Y%m%d-%H%M%S-%f}.sqlite3"
+        cible = dossier / f"patrimoine-{timezone.localtime():%Y%m%d-%H%M%S-%f}.sqlite3"
         connection.ensure_connection()
         copie = sqlite3.connect(cible)
         try:

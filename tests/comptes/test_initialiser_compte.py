@@ -29,3 +29,9 @@ def test_refuse_un_mot_de_passe_trop_court(env):
     with pytest.raises(CommandError, match="mot de passe"):
         call_command("initialiser_compte")
     assert not get_user_model().objects.exists()
+
+
+def test_ne_recree_pas_de_compte_si_un_utilisateur_existe(env):
+    get_user_model().objects.create_user("autre-nom", password="mot-de-passe-change-depuis")
+    call_command("initialiser_compte")
+    assert not get_user_model().objects.filter(username="franck").exists()

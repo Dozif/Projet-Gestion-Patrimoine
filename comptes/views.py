@@ -4,6 +4,8 @@ from hmac import compare_digest
 import qrcode
 import qrcode.image.svg
 from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth import logout
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -11,6 +13,8 @@ from django_otp import login as otp_login
 from django_otp.plugins.otp_totp.models import TOTPDevice
 
 PAGE = "comptes/double_authentification.html"
+LONGUEUR_MIN_CODE = 16
+ESSAIS_MAX = 5
 
 
 def _etape_installation(request):
@@ -18,13 +22,19 @@ def _etape_installation(request):
     if settings.PATRIMOINE_INSCRIPTION_LIBRE or request.session.get("installation_validee"):
         return None
     code_attendu = settings.PATRIMOINE_CODE_INSTALLATION
-    if not code_attendu:
+    if len(code_attendu) < LONGUEUR_MIN_CODE:
         return render(request, PAGE, {"ferme": True})
     erreur = None
     if request.method == "POST" and "code_installation" in request.POST:
         if compare_digest(request.POST["code_installation"].strip().encode(), code_attendu.encode()):
             request.session["installation_validee"] = True
             return redirect(request.get_full_path())
+        essais = request.session.get("essais_installation", 0) + 1
+        if essais >= ESSAIS_MAX:
+            logout(request)
+            messages.error(request, "Trop d'essais du code d'installation : reconnectez-vous.")
+            return redirect("comptes:connexion")
+        request.session["essais_installation"] = essais
         erreur = "Code d'installation incorrect."
     return render(request, PAGE, {"installation": True, "erreur": erreur})
 

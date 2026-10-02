@@ -13,6 +13,10 @@ if not SECRET_KEY:
     if not DEBUG:
         raise ImproperlyConfigured("DJANGO_SECRET_KEY doit être défini en production.")
     SECRET_KEY = "dev-uniquement-ne-pas-utiliser-en-production"
+if not DEBUG and (SECRET_KEY == "a-remplacer" or len(SECRET_KEY) < 50):
+    raise ImproperlyConfigured(
+        "DJANGO_SECRET_KEY doit être une clé aléatoire d'au moins 50 caractères (voir le guide)."
+    )
 
 ALLOWED_HOSTS = [h for h in os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h]
 CSRF_TRUSTED_ORIGINS = [o for o in os.environ.get("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",") if o]

@@ -16,8 +16,8 @@ class Command(BaseCommand):
             self.stdout.write("Aucun compte à initialiser (variables PATRIMOINE_ADMIN_* absentes).")
             return
         Utilisateur = get_user_model()
-        if Utilisateur.objects.filter(username=identifiant).exists():
-            self.stdout.write(f"Le compte « {identifiant} » existe déjà : il n'est pas modifié.")
+        if Utilisateur.objects.exists():
+            self.stdout.write("Un compte existe déjà : aucun compte n'est créé ni modifié.")
             return
         try:
             validate_password(mot_de_passe, Utilisateur(username=identifiant))

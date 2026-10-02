@@ -11,6 +11,7 @@ services:
       - ./data:/data
     ports:
       - "127.0.0.1:8085:8000"
+    # Le contrôle de santé interroge 127.0.0.1 : gardez 127.0.0.1 dans DJANGO_ALLOWED_HOSTS (.env).
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/compte/connexion/', timeout=5)"]
       interval: 1m

@@ -31,3 +31,15 @@ def test_fins_de_ligne_linux_pour_les_fichiers_du_conteneur():
     attributs = lire(".gitattributes")
     for motif in ("*.sh", "Dockerfile", "*.yml"):
         assert f"{motif} text eol=lf" in attributs
+
+
+def test_image_robuste():
+    dockerfile = lire("Dockerfile")
+    assert "command -v setpriv" in dockerfile
+    assert 'ENTRYPOINT ["/bin/sh", "/app/docker/entrypoint.sh"]' in dockerfile
+    assert "tzdata" in lire("requirements.txt")
+    assert "choisir" in lire(".env.example")
+
+
+def test_dockerfile_sans_sequence_d_echappement_litterale():
+    assert chr(92) + "n" not in lire("Dockerfile")

@@ -29,3 +29,12 @@ def test_reglages_de_production_sans_avertissement():
         cwd=RACINE, env=env, capture_output=True, text=True,
     )
     assert r.stdout.strip() == "True", r.stderr
+
+
+def test_cle_secrete_d_exemple_refusee_en_production():
+    env = {**os.environ, "DJANGO_DEBUG": "0", "DJANGO_SECRET_KEY": "a-remplacer"}
+    r = subprocess.run(
+        [sys.executable, "-c", "import config.settings"], cwd=RACINE, env=env, capture_output=True, text=True
+    )
+    assert r.returncode != 0
+    assert "50 caractères" in r.stderr
