@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block titre %}Bail — {{ bien.nom }}{% endblock %}
+{% block contenu %}
+<header class="entete"><div><h1>{% if bail.pk %}Modifier le bail{% else %}Nouveau bail{% endif %}</h1><p class="sous-titre">{{ bien.nom }}</p></div></header>
+<form method="post" class="carte formulaire">
+  {% csrf_token %}
+  <h2>Locataire</h2>
+  {{ form_locataire }}
+  <h2>Bail</h2>
+  {{ form_bail }}
+  <div class="actions">
+    <button class="bouton principal" type="submit">Enregistrer</button>
+    <a class="bouton" href="{{ bien.get_absolute_url }}">Annuler</a>
+  </div>
+</form>
+{% endblock %}

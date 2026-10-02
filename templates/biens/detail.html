@@ -1,0 +1,52 @@
+{% extends "base.html" %}{% load montants %}
+{% block titre %}{{ bien.nom }}{% endblock %}
+{% block contenu %}
+<header class="entete">
+  <div><h1>{{ bien.nom }}</h1><p class="sous-titre">{{ bien.get_regime_display }}{% if bien.adresse %} · {{ bien.adresse }}{% endif %}</p></div>
+  <a class="bouton" href="{% url 'biens:modifier' bien.pk %}">Modifier</a>
+</header>
+<div class="grille">
+  <section class="carte">
+    <h2>Informations</h2>
+    <dl class="infos">
+      <dt>Surface habitable</dt><dd>{{ bien.surface_habitable }} m²</dd>
+      <dt>Annexes</dt><dd>{{ bien.surface_annexes }} m²</dd>
+      <dt>Acquisition</dt><dd>{{ bien.date_acquisition|default:"—" }}</dd>
+      <dt>Prix de revient</dt><dd>{{ bien.prix_revient|euros }}</dd>
+      <dt>Locaux</dt><dd>{{ bien.nb_locaux }}</dd>
+    </dl>
+  </section>
+  <section class="carte">
+    <h2>Bail en cours</h2>
+    {% if bail %}
+    <dl class="infos">
+      <dt>Locataire</dt><dd>{{ bail.locataire.nom }}</dd>
+      <dt>Depuis</dt><dd>{{ bail.date_debut }}</dd>
+      <dt>Loyer HC</dt><dd>{{ bail.loyer_hc|euros }}</dd>
+      <dt>Provision charges</dt><dd>{{ bail.provision_charges|euros }}</dd>
+    </dl>
+    <p><a href="{% url 'biens:modifier_bail' bien.pk bail.pk %}">Modifier le bail</a></p>
+    {% else %}<p>Aucun bail en cours.</p>{% endif %}
+    <p><a class="bouton" href="{% url 'biens:creer_bail' bien.pk %}">+ Nouveau bail</a></p>
+    {% if baux|length > 1 %}
+    <h3>Historique</h3>
+    <ul>{% for b in baux %}<li><a href="{% url 'biens:modifier_bail' bien.pk b.pk %}">{{ b.locataire.nom }}</a> — {{ b.date_debut }} → {{ b.date_fin|default:"en cours" }} — {{ b.loyer_hc|euros }}</li>{% endfor %}</ul>
+    {% endif %}
+  </section>
+  <section class="carte">
+    <h2>Pinel</h2>
+    {% if pinel %}
+    <dl class="infos">
+      <dt>Zone</dt><dd>{{ pinel.zone }}</dd>
+      <dt>Engagement</dt><dd>{{ pinel.duree_annees }} ans, fin le {{ fin_engagement }}</dd>
+      <dt>Réduction {{ annee }}</dt><dd>{{ reduction_annee|euros }}</dd>
+      <dt>Cumul obtenu</dt><dd>{{ reduction_cumulee|euros }} sur {{ reduction_totale|euros }}</dd>
+    </dl>
+    <p><a href="{% url 'biens:pinel' bien.pk %}">Modifier l'engagement</a></p>
+    {% else %}
+    <p>Pas d'engagement Pinel.</p>
+    <p><a class="bouton" href="{% url 'biens:pinel' bien.pk %}">Ajouter un engagement Pinel</a></p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

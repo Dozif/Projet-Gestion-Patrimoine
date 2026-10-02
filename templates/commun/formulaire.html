@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block titre %}{{ titre }}{% endblock %}
+{% block contenu %}
+<header class="entete"><div><h1>{{ titre }}</h1>{% if intro %}<p class="sous-titre">{{ intro }}</p>{% endif %}</div></header>
+<form method="post" enctype="multipart/form-data" class="carte formulaire">
+  {% csrf_token %}
+  {{ form }}
+  <div class="actions">
+    <button type="submit" class="bouton principal">Enregistrer</button>
+    {% if retour %}<a class="bouton" href="{{ retour }}">Annuler</a>{% endif %}
+  </div>
+</form>
+{% if suppression %}
+<form method="post" action="{{ suppression }}">{% csrf_token %}<button type="submit" class="bouton danger">Supprimer</button></form>
+{% endif %}
+{% endblock %}

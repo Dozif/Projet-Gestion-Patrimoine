@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block titre %}Pinel — {{ bien.nom }}{% endblock %}
+{% block contenu %}
+<header class="entete"><div><h1>Engagement Pinel</h1><p class="sous-titre">{{ bien.nom }}</p></div></header>
+<form method="post" class="carte formulaire">
+  {% csrf_token %}
+  {{ form }}
+  <h2>Calendrier de réduction</h2>
+  <p class="helptext">Une ligne par période, par exemple 2 % par an de 2015 à 2023 puis 1 % par an de 2024 à 2026. Reprenez les taux de vos avis d'imposition.</p>
+  {{ formset.management_form }}
+  {{ formset.non_form_errors }}
+  <table>
+    <thead><tr><th>Année de début</th><th>Année de fin</th><th>Taux annuel (%)</th><th>Supprimer</th></tr></thead>
+    <tbody>
+    {% for f in formset %}
+      <tr>
+        {% for cache in f.hidden_fields %}{{ cache }}{% endfor %}
+        <td>{{ f.annee_debut }}{{ f.annee_debut.errors }}</td>
+        <td>{{ f.annee_fin }}{{ f.annee_fin.errors }}</td>
+        <td>{{ f.taux_annuel }}{{ f.taux_annuel.errors }}</td>
+        <td>{% if f.instance.pk %}{{ f.DELETE }}{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <div class="actions">
+    <button class="bouton principal" type="submit">Enregistrer</button>
+    <a class="bouton" href="{{ bien.get_absolute_url }}">Annuler</a>
+  </div>
+</form>
+{% endblock %}

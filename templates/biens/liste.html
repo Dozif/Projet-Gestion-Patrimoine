@@ -1,0 +1,26 @@
+{% extends "base.html" %}{% load montants %}
+{% block titre %}Biens{% endblock %}
+{% block contenu %}
+<header class="entete">
+  <div><h1>Biens</h1><p class="sous-titre">{{ biens|length }} bien{{ biens|length|pluralize }}</p></div>
+  <a class="bouton principal" href="{% url 'biens:creer' %}">+ Nouveau bien</a>
+</header>
+<div class="carte tableau">
+<table>
+  <thead><tr><th>Nom</th><th>Régime</th><th class="montant">Surface</th><th class="montant">Prix de revient</th><th>Dispositif</th></tr></thead>
+  <tbody>
+  {% for bien in biens %}
+    <tr>
+      <td><a href="{{ bien.get_absolute_url }}">{{ bien.nom }}</a></td>
+      <td>{{ bien.get_regime_display }}</td>
+      <td class="montant">{{ bien.surface_habitable }} m²</td>
+      <td class="montant">{{ bien.prix_revient|euros }}</td>
+      <td>{% if bien.pinel %}<span class="badge accent">Pinel</span>{% else %}—{% endif %}</td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="5">Aucun bien pour l'instant.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}
