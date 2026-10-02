@@ -5,6 +5,7 @@
   <div><h1>{{ pret.banque }}{% if pret.libelle %} — {{ pret.libelle }}{% endif %}</h1><p class="sous-titre">{{ pret.bien.nom }} · {{ pret.capital_emprunte|euros }} empruntés le {{ pret.date_debut|date:"d/m/Y" }}</p></div>
   <div class="actions">
     <a class="bouton" href="{% url 'credit:modifier' pret.pk %}">Modifier</a>
+    <a class="bouton" href="{% url 'credit:ajouter_echeance' pret.pk %}">+ Échéance</a>
     <a class="bouton principal" href="{% url 'credit:importer' pret.pk %}">Importer un échéancier</a>
   </div>
 </header>
@@ -23,8 +24,8 @@
 {% if echeances %}
 <details class="carte"><summary>Détail des {{ echeances|length }} échéances</summary>
 <table>
-  <thead><tr><th>Date</th><th class="montant">Capital</th><th class="montant">Intérêts</th><th class="montant">Assurance</th></tr></thead>
-  <tbody>{% for e in echeances %}<tr><td>{{ e.date|date:"d/m/Y" }}</td><td class="montant">{{ e.capital|euros }}</td><td class="montant">{{ e.interets|euros }}</td><td class="montant">{{ e.assurance|euros }}</td></tr>{% endfor %}</tbody>
+  <thead><tr><th>Date</th><th class="montant">Capital</th><th class="montant">Intérêts</th><th class="montant">Assurance</th><th><span class="sr">Actions</span></th></tr></thead>
+  <tbody>{% for e in echeances %}<tr><td>{{ e.date|date:"d/m/Y" }}</td><td class="montant">{{ e.capital|euros }}</td><td class="montant">{{ e.interets|euros }}</td><td class="montant">{{ e.assurance|euros }}</td><td><a href="{% url 'credit:modifier_echeance' pret.pk e.pk %}">Modifier</a></td></tr>{% endfor %}</tbody>
 </table>
 </details>
 {% endif %}

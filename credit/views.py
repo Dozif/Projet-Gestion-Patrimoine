@@ -4,8 +4,9 @@ from django.contrib import messages
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.views.decorators.http import require_POST
 
-from .forms import ColonnesForm, PretForm
+from .forms import ColonnesForm, EcheanceForm, PretForm
 from .import_csv import ErreurImport, decoder, lire_echeancier, lire_entetes
 from .models import Echeance, Pret
 
@@ -95,3 +96,38 @@ def importer(request, pk):
                 "assurance": sum(e.assurance for e in lues),
             }
     return render(request, "credit/import_colonnes.html", {"pret": pret, "form": form, "apercu": apercu})
+
+
+def ajouter_echeance(request, pk):
+    pret = get_object_or_404(Pret, pk=pk)
+    return _formulaire_echeance(request, pret, Echeance(pret=pret))
+
+
+def modifier_echeance(request, pk, echeance_pk):
+    pret = get_object_or_404(Pret, pk=pk)
+    return _formulaire_echeance(request, pret, get_object_or_404(Echeance, pk=echeance_pk, pret=pret))
+
+
+def _formulaire_echeance(request, pret, echeance):
+    form = EcheanceForm(request.POST or None, instance=echeance, pret=pret)
+    if request.method == "POST" and form.is_valid():
+        echeance = form.save(commit=False)
+        echeance.pret = pret
+        echeance.save()
+        messages.success(request, f"Échéance du {echeance.date:%d/%m/%Y} enregistrée.")
+        return redirect(pret)
+    contexte = {
+        "form": form, "titre": "Modifier l'échéance" if echeance.pk else "Nouvelle échéance",
+        "intro": str(pret), "retour": pret.get_absolute_url(),
+    }
+    if echeance.pk:
+        contexte["suppression"] = reverse("credit:supprimer_echeance", args=[pret.pk, echeance.pk])
+    return render(request, "commun/formulaire.html", contexte)
+
+
+@require_POST
+def supprimer_echeance(request, pk, echeance_pk):
+    pret = get_object_or_404(Pret, pk=pk)
+    get_object_or_404(Echeance, pk=echeance_pk, pret=pret).delete()
+    messages.success(request, "Échéance supprimée.")
+    return redirect(pret)

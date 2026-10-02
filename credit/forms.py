@@ -3,7 +3,7 @@ from django import forms
 from commun.forms import MontantField
 
 from .import_csv import Colonnes
-from .models import Pret
+from .models import Echeance, Pret
 
 
 class PretForm(forms.ModelForm):
@@ -42,3 +42,25 @@ class ColonnesForm(forms.Form):
 
     def colonnes(self) -> Colonnes:
         return Colonnes(**self.cleaned_data)
+
+
+class EcheanceForm(forms.ModelForm):
+    capital = MontantField(label="Capital remboursé (€)", required=False, minimum=0, valeur_si_vide=0)
+    interets = MontantField(label="Intérêts (€)", required=False, minimum=0, valeur_si_vide=0)
+    assurance = MontantField(label="Assurance emprunteur (€)", required=False, minimum=0, valeur_si_vide=0)
+    frais = MontantField(label="Frais (€)", required=False, minimum=0, valeur_si_vide=0)
+
+    class Meta:
+        model = Echeance
+        fields = ["date", "capital", "interets", "assurance", "frais"]
+        widgets = {"date": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d")}
+
+    def __init__(self, *args, pret, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.pret = pret
+
+    def clean_date(self):
+        jour = self.cleaned_data["date"]
+        if Echeance.objects.filter(pret=self.pret, date=jour).exclude(pk=self.instance.pk).exists():
+            raise forms.ValidationError("Une échéance existe déjà à cette date pour ce prêt.")
+        return jour
