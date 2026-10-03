@@ -43,3 +43,30 @@ def test_image_robuste():
 
 def test_dockerfile_sans_sequence_d_echappement_litterale():
     assert chr(92) + "n" not in lire("Dockerfile")
+
+
+def test_conteneur_sans_nouveaux_privileges_et_tmp_borne():
+    compose = lire("docker-compose.yml")
+    assert "no-new-privileges:true" in compose
+    assert "/tmp:size=" in compose
+
+
+def test_options_gunicorn_explicites():
+    entree = lire("docker/entrypoint.sh")
+    for option in ("--timeout 30", "--limit-request-line 4094", "--limit-request-fields 100"):
+        assert option in entree
+
+
+def test_le_guide_ne_fait_jamais_ouvrir_les_donnees_a_tout_le_monde():
+    guide = lire("docs/INSTALLATION-SYNOLOGY.md")
+    assert "Everyone" not in guide
+    assert "chown -R 1000:1000" in guide
+
+
+def test_le_guide_documente_le_secours_et_le_changement_de_telephone():
+    guide = lire("docs/INSTALLATION-SYNOLOGY.md")
+    assert "## Secours" in guide
+    assert "changepassword" in guide
+    assert "debloquer_2fa" in guide
+    assert "Supprimer" in guide and "TOTP" in guide
+    assert "client_max_body_size" in guide

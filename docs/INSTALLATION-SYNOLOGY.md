@@ -37,6 +37,8 @@ si vous avez déjà un certificat générique `*.votredomaine.fr`.
    L'application refuse de démarrer si la clé secrète est restée `a-remplacer`.
 
    Évitez le Bloc-notes de Windows pour ce fichier : il peut ajouter des fins de ligne Windows.
+3. Le `.env` contient des secrets : si d'autres comptes DSM ont accès au dossier partagé `docker`, clic droit
+   sur `.env` → **Propriétés** → **Autorisation** et ne laissez l'accès qu'aux administrateurs.
 
 ## 4. Construire et démarrer le conteneur
 
@@ -46,9 +48,11 @@ si vous avez déjà un certificat générique `*.votredomaine.fr`.
    quelques minutes ; le projet passe ensuite à l'état « En cours d'exécution ».
 4. Dans **Conteneur** → `patrimoine` → **Journal**, vous devez lire « Compte « … » créé » puis les
    lignes de démarrage de Gunicorn. Si le journal indique « unable to open database file », le dossier
-   `docker/patrimoine/data` n'est pas accessible en écriture : dans File Station, clic droit sur `data` →
-   **Propriétés** → **Autorisation**, donnez le contrôle total à « Everyone » sur ce seul dossier, puis
-   redémarrez le projet.
+   `docker/patrimoine/data` n'est pas accessible en écriture au conteneur (utilisateur n° 1000). Ne l'ouvrez
+   **jamais** à tous les comptes : la base contient de quoi entrer dans l'application sans mot de passe.
+   Donnez-le au seul utilisateur du conteneur, en SSH (voir « Secours » pour activer SSH) :
+   `sudo chown -R 1000:1000 /volume1/docker/patrimoine/data && sudo chmod -R u+rwX,go-rwx /volume1/docker/patrimoine/data`
+   (adaptez `volume1` si votre dossier `docker` est sur un autre volume), puis redémarrez le projet.
 
 ## 5. Publier l'application en HTTPS (proxy inversé)
 
@@ -57,6 +61,9 @@ si vous avez déjà un certificat générique `*.votredomaine.fr`.
    cochez **Activer HSTS**. Destination : protocole **HTTP**, nom d'hôte **127.0.0.1**, port **8085**.
 3. Onglet **En-tête personnalisé** → **Créer** → **En-tête personnalisé** : nom `X-Forwarded-Proto`, valeur `https`.
 4. **Enregistrer**.
+5. Vérification conseillée (SSH) : `sudo grep -rn -E 'client_max_body_size|proxy_request_buffering' /etc/nginx/`.
+   L'application refuse d'elle-même les envois de plus de 12 Mo (64 Ko avant connexion) ; si une ligne
+   `proxy_request_buffering off` concerne ce proxy, un envoi très lent peut occuper le serveur jusqu'à 30 s.
 
 ## 6. Certificat HTTPS
 
@@ -74,9 +81,18 @@ si vous avez déjà un certificat générique `*.votredomaine.fr`.
    **Réinitialiser le mot de passe**. Effacez ensuite la valeur de `PATRIMOINE_ADMIN_MOT_DE_PASSE` dans `.env`.
 4. Par sécurité, effacez ensuite la valeur de `PATRIMOINE_CODE_INSTALLATION` dans `.env` puis, dans
    Container Manager, **Projet** → `patrimoine` → **Arrêter**, puis **Démarrer** (l'enrôlement d'un nouveau
-   téléphone sera alors fermé ; remettez un code le jour où vous changez de téléphone). Vérifiez dans
-   **Conteneur** → `patrimoine` → **Détails** → **Environnement** que la variable est bien vide ; sinon,
-   utilisez **Action** → **Construire** pour recréer le conteneur.
+   téléphone sera alors fermé). Vérifiez dans **Conteneur** → `patrimoine` → **Détails** → **Environnement**
+   que les deux variables (mot de passe et code) sont bien vides ; sinon, utilisez **Action** → **Construire**
+   pour recréer le conteneur. Un mot de passe resté dans l'environnement recréerait le compte avec cet ancien
+   mot de passe si la base venait à être vidée.
+
+### Changer de téléphone
+
+1. Connecté avec l'ancien téléphone : **Paramètres** → **TOTP devices** → votre appareil → **Supprimer**
+   (ne vous contentez pas de décocher « confirmed » : l'ancien téléphone resterait valable).
+2. Remettez un code d'installation dans `.env`, recréez le conteneur (**Action** → **Construire**), reconnectez-vous
+   et scannez le nouveau QR code avec le nouveau téléphone. Effacez ensuite le code comme à l'étape 4.
+3. Téléphone perdu ou volé : suivez « Secours » ci-dessous, et changez aussi le mot de passe.
 
 ## 8. Sauvegardes
 
@@ -87,6 +103,25 @@ si vous avez déjà un certificat générique `*.votredomaine.fr`.
    Puis sélectionnez la tâche → **Exécuter**, et vérifiez qu'un fichier est apparu dans `docker/patrimoine/data/sauvegardes`.
 2. **Hyper Backup** : créez une tâche qui sauvegarde le dossier `docker/patrimoine` (base, justificatifs,
    sauvegardes et `.env`) vers un disque externe ou un service cloud, avec **chiffrement côté client**.
+3. Restaurer une sauvegarde remet aussi l'ancien mot de passe et l'ancienne double authentification qu'elle
+   contient : si vous aviez changé l'un ou l'autre après cette sauvegarde (par exemple après une fuite),
+   refaites ce changement juste après la restauration.
+
+## Secours
+
+À utiliser si la double authentification est bloquée (« Trop de codes incorrects » alors que vous n'avez pas
+fait d'erreur : quelqu'un connaît votre mot de passe), si votre mot de passe a fuité ou si vous avez perdu
+votre téléphone. Tout se fait depuis le NAS, sans passer par l'application.
+
+1. Activez SSH : **Panneau de configuration** → **Terminal et SNMP** → **Activer le service SSH**. Depuis le PC :
+   `ssh votre-compte-admin@adresse-du-nas` (désactivez SSH une fois terminé).
+2. Changez le mot de passe (toutes les sessions ouvertes avec l'ancien sont fermées) :
+   `sudo /usr/local/bin/docker exec -it -u patrimoine patrimoine python manage.py changepassword <identifiant>`
+3. Débloquez la double authentification :
+   `sudo /usr/local/bin/docker exec -u patrimoine patrimoine python manage.py debloquer_2fa`
+4. Téléphone perdu : supprimez l'appareil avec
+   `sudo /usr/local/bin/docker exec -u patrimoine patrimoine python manage.py debloquer_2fa --supprimer-appareil`,
+   puis enrôlez le nouveau téléphone comme dans « Changer de téléphone » (étape 2).
 
 ## Mettre à jour l'application
 

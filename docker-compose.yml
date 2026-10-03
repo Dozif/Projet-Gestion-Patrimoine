@@ -11,6 +11,12 @@ services:
       - ./data:/data
     ports:
       - "127.0.0.1:8085:8000"
+    # Aucun programme du conteneur ne peut regagner des privilèges (setuid) après le passage à l'utilisateur patrimoine.
+    security_opt:
+      - no-new-privileges:true
+    # Fichiers temporaires (envois en cours) en mémoire et bornés : ils ne peuvent pas remplir le disque du NAS.
+    tmpfs:
+      - /tmp:size=64m
     # Le contrôle de santé interroge 127.0.0.1 : gardez 127.0.0.1 dans DJANGO_ALLOWED_HOSTS (.env).
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/compte/connexion/', timeout=5)"]

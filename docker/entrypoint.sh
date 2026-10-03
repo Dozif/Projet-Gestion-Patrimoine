@@ -8,4 +8,6 @@ lancer() { setpriv --reuid=patrimoine --regid=patrimoine --init-groups "$@"; }
 lancer python manage.py migrate --noinput
 lancer python manage.py initialiser_compte
 exec setpriv --reuid=patrimoine --regid=patrimoine --init-groups \
-    gunicorn config.wsgi --bind 0.0.0.0:8000 --workers 2 --access-logfile - --error-logfile -
+    gunicorn config.wsgi --bind 0.0.0.0:8000 --workers 2 --timeout 30 --graceful-timeout 30 \
+    --limit-request-line 4094 --limit-request-fields 100 --limit-request-field_size 8190 \
+    --access-logfile - --error-logfile -

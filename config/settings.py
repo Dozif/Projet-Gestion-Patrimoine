@@ -48,6 +48,7 @@ MIDDLEWARE = [
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
+    "commun.middleware.LimiteTailleRequete",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django_otp.middleware.OTPMiddleware",
@@ -102,6 +103,8 @@ STORAGES = {
     "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
 }
 SAUVEGARDES_DIR = DATA_DIR / "sauvegardes"
+# Un seul fichier par formulaire (le justificatif) ; la taille du corps est bornée par commun.middleware.
+DATA_UPLOAD_MAX_NUMBER_FILES = 1
 # Pas de MEDIA_URL : les justificatifs ne sont servis que par une vue authentifiée.
 MEDIA_ROOT = Path(os.environ.get("PATRIMOINE_MEDIA_DIR", DATA_DIR / "justificatifs"))
 
@@ -113,6 +116,8 @@ LOGOUT_REDIRECT_URL = "comptes:connexion"
 SESSION_COOKIE_AGE = 8 * 60 * 60
 
 OTP_TOTP_ISSUER = "Patrimoine"
+# L'admin n'affiche pas la clé secrète TOTP (elle permettrait de générer des codes).
+OTP_ADMIN_HIDE_SENSITIVE_DATA = True
 
 AXES_FAILURE_LIMIT = 5
 AXES_COOLOFF_TIME = 1  # heure

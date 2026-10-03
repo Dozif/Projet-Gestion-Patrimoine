@@ -53,7 +53,7 @@ def detail(request, pk):
 def importer(request, pk):
     pret = get_object_or_404(Pret, pk=pk)
     cle = f"import_echeancier_{pk}"
-    if request.GET.get("recommencer"):
+    if request.method == "POST" and "recommencer" in request.POST:
         request.session.pop(cle, None)
         return redirect("credit:importer", pk=pk)
     if request.method == "POST" and "fichier" in request.FILES:

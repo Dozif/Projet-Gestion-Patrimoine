@@ -52,7 +52,7 @@ def _sans_lignes_vides_en_tete(texte: str) -> str:
     return "".join(lignes)
 
 
-def lire_entetes(texte: str) -> list[str]:
+def _lire_entetes(texte: str) -> list[str]:
     texte = _sans_lignes_vides_en_tete(texte)
     lecteur = csv.reader(io.StringIO(texte), delimiter=_separateur(texte))
     for ligne in lecteur:
@@ -75,7 +75,7 @@ def _montant(valeur: str | None) -> int:
     return 0 if not valeur else abs(parse_euros(valeur))
 
 
-def lire_echeancier(texte: str, colonnes: Colonnes) -> list[EcheanceLue]:
+def _lire_echeancier(texte: str, colonnes: Colonnes) -> list[EcheanceLue]:
     sans_vides = _sans_lignes_vides_en_tete(texte)
     retirees = texte.count("\n") - sans_vides.count("\n")
     texte = sans_vides
@@ -110,3 +110,17 @@ def lire_echeancier(texte: str, colonnes: Colonnes) -> list[EcheanceLue]:
     if not lues:
         raise ErreurImport("Aucune échéance trouvée dans le fichier.")
     return lues
+
+
+def lire_entetes(texte: str) -> list[str]:
+    try:
+        return _lire_entetes(texte)
+    except csv.Error as erreur:
+        raise ErreurImport(f"Fichier CSV illisible : {erreur}.") from None
+
+
+def lire_echeancier(texte: str, colonnes: Colonnes) -> list[EcheanceLue]:
+    try:
+        return _lire_echeancier(texte, colonnes)
+    except csv.Error as erreur:
+        raise ErreurImport(f"Fichier CSV illisible : {erreur}.") from None

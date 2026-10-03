@@ -117,9 +117,15 @@ def empreinte(donnees: dict) -> str:
     return hashlib.sha256(json.dumps(donnees, sort_keys=True).encode()).hexdigest()
 
 
+def _texte_csv(valeur: str) -> str:
+    """Neutralise une cellule qu'un tableur prendrait pour une formule (=, +, -, @…)."""
+    return "'" + valeur if valeur[:1] in ("=", "+", "-", "@", "\t", "\r") else valeur
+
+
 def ecrire_csv(fichier, resultat, contexte) -> None:
     ecrivain = csv.writer(fichier, delimiter=";")
-    ecrivain.writerow(["Ligne", "Libellé", *colonnes_biens(resultat, contexte), "Total"])
+    noms = [_texte_csv(nom) for nom in colonnes_biens(resultat, contexte)]
+    ecrivain.writerow(["Ligne", "Libellé", *noms, "Total"])
     for ligne in lignes_declaration(resultat):
         ecrivain.writerow(
             [ligne["code"], ligne["libelle"], *(en_euros(v) for v in ligne["valeurs"]), en_euros(ligne["total"])]

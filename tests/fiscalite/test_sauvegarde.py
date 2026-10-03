@@ -1,7 +1,12 @@
+import os
 import sqlite3
+import stat
+from datetime import timedelta
 
 import pytest
+from django.contrib.sessions.models import Session
 from django.core.management import call_command
+from django.utils import timezone
 
 from tests.aides import creer_bien
 
@@ -27,3 +32,18 @@ def test_rotation_des_sauvegardes(settings, tmp_path):
     restants = sorted(p.name for p in tmp_path.glob("patrimoine-*.sqlite3"))
     assert len(restants) == 30
     assert sum(1 for nom in restants if not nom.startswith("patrimoine-2020")) == 2
+
+
+def test_sessions_expirees_purgees_avant_la_sauvegarde(settings, tmp_path):
+    settings.SAUVEGARDES_DIR = tmp_path
+    Session.objects.create(session_key="perimee", session_data="", expire_date=timezone.now() - timedelta(days=1))
+    call_command("sauvegarder")
+    assert not Session.objects.filter(session_key="perimee").exists()
+
+
+@pytest.mark.skipif(os.name == "nt", reason="droits POSIX (le conteneur tourne sous Linux)")
+def test_sauvegarde_lisible_par_le_seul_proprietaire(settings, tmp_path):
+    settings.SAUVEGARDES_DIR = tmp_path
+    call_command("sauvegarder")
+    fichier = next(tmp_path.glob("patrimoine-*.sqlite3"))
+    assert stat.S_IMODE(fichier.stat().st_mode) == 0o600

@@ -74,9 +74,12 @@ def modifier(request, pk):
 
 
 def _formulaire(request, operation, initial):
+    ancien_justificatif = operation.justificatif.name
     form = OperationForm(request.POST or None, request.FILES or None, instance=operation, initial=initial)
     if request.method == "POST" and form.is_valid():
         operation = form.save()
+        if ancien_justificatif and operation.justificatif.name != ancien_justificatif:
+            operation.justificatif.storage.delete(ancien_justificatif)
         messages.success(request, f"Opération « {operation.libelle} » enregistrée.")
         return redirect(f"{reverse('operations:liste')}?annee={operation.date_paiement.year}")
     contexte = {
@@ -93,7 +96,10 @@ def _formulaire(request, operation, initial):
 def supprimer(request, pk):
     operation = get_object_or_404(Operation, pk=pk)
     annee = operation.date_paiement.year
+    justificatif = operation.justificatif
     operation.delete()
+    if justificatif:
+        justificatif.storage.delete(justificatif.name)
     messages.success(request, "Opération supprimée.")
     return redirect(f"{reverse('operations:liste')}?annee={annee}")
 
@@ -128,4 +134,7 @@ def justificatif(request, pk):
     operation = get_object_or_404(Operation, pk=pk)
     if not operation.justificatif:
         raise Http404("Aucun justificatif.")
-    return FileResponse(operation.justificatif.open("rb"), filename=Path(operation.justificatif.name).name)
+    # En pièce jointe : le navigateur n'interprète jamais le fichier sur l'origine de l'application.
+    return FileResponse(
+        operation.justificatif.open("rb"), as_attachment=True, filename=Path(operation.justificatif.name).name
+    )

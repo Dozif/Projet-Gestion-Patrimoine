@@ -30,11 +30,26 @@ CLASSES_BADGE = {
 }
 
 
+# Premiers octets attendus pour chaque extension : un fichier HTML ou SVG renommé en .pdf ou .png est refusé.
+SIGNATURES_JUSTIFICATIF = {
+    ".pdf": (b"%PDF-",),
+    ".png": (b"\x89PNG\r\n\x1a\n",),
+    ".jpg": (b"\xff\xd8\xff",),
+    ".jpeg": (b"\xff\xd8\xff",),
+}
+
+
 def valider_justificatif(fichier):
-    if Path(fichier.name).suffix.lower() not in EXTENSIONS_JUSTIFICATIF:
+    extension = Path(fichier.name).suffix.lower()
+    if extension not in EXTENSIONS_JUSTIFICATIF:
         raise ValidationError("Formats acceptés : PDF, JPEG ou PNG.")
     if fichier.size > TAILLE_MAX_JUSTIFICATIF:
         raise ValidationError("Le justificatif ne doit pas dépasser 10 Mo.")
+    fichier.seek(0)
+    debut = fichier.read(8)
+    fichier.seek(0)
+    if not debut.startswith(SIGNATURES_JUSTIFICATIF[extension]):
+        raise ValidationError("Le contenu du fichier ne correspond pas à son extension (PDF, JPEG ou PNG).")
 
 
 def chemin_justificatif(instance, nom_fichier):
